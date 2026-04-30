@@ -372,7 +372,14 @@ function exportarBackup(){
     periodo: { desde, hasta },
     totalTxs: allRows.length,
     archivos: archivosLog,
-    rows: allRows,
+    rows: allRows.map(r => {
+      // Asegurar que __fecha__ salga en ISO YYYY-MM-DD
+      const o = Object.assign({}, r);
+      const f = o['__fecha__']||'';
+      const fm = f.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if(fm) o['__fecha__'] = fm[3]+'-'+fm[2].padStart(2,'0')+'-'+fm[1].padStart(2,'0');
+      return o;
+    }),
   };
   const json = JSON.stringify(backup, null, 2);
   const blob = new Blob([json], {type:'application/json'});
@@ -391,56 +398,38 @@ function importarBackup(file){
   reader.onload = function(e){
     try{
       const backup = JSON.parse(e.target.result);
-
-      // Validar formato — aceptar cualquier versión
       if(!backup.rows || !Array.isArray(backup.rows)){
         alert('Archivo inválido. No es un backup de YPF Pay Dashboard.');
         return;
       }
 
-      // Asegurarse que cada row tenga las keys canónicas
-      // Si vienen de una versión anterior sin __area__ etc, intentar reconstruirlas
-      const rowsNormalizadas = backup.rows.map(r => {
-        // Si ya tiene keys canónicas, está bien
-        if(r['__area__'] !== undefined) return r;
-        // Si no, intentar reconstruir desde keys normalizadas
+      // Normalizar keys canónicas por si vienen de versión anterior
+      const rowsOk = backup.rows.map(r => {
         const o = Object.assign({}, r);
-        o['__area__']    = r['area']    || r['Area']    || r['Área']    || '';
-        o['__motor__']   = r['motor de pago detalle'] || r['Motor de pago detalle'] || r['motor de pago'] || r['Motor de pago'] || '';
-        o['__medio__']   = r['medio de pago'] || r['Medio de pago'] || '';
-        o['__importe__'] = r['importe'] || r['Importe'] || '';
-        o['__desc__']    = r['descuentos'] || r['Descuentos'] || '';
-        o['__reden__']   = r['redenciones'] || r['Redenciones'] || '';
-        o['__estado__']  = r['estado'] || r['Estado'] || '';
-        o['__fecha__']   = r['fecha']  || r['Fecha']  || '';
-        o['__hora__']    = r['hora']   || r['Hora']   || '';
-        o['__prod__']    = r['productos'] || r['Productos'] || '';
-        o['__vend__']    = r['__vend__'] || '';
-        o['__cliente__'] = r['cliente'] || r['Cliente'] || '';
-        o['__turno__']   = r['__turno__'] || getTurno(o['__hora__']);
+        if(o['__area__']===undefined)    o['__area__']    = r['area']||r['Area']||r['Área']||'';
+        if(o['__motor__']===undefined)   o['__motor__']   = r['motor de pago detalle']||r['Motor de pago detalle']||r['motor de pago']||r['Motor de pago']||'';
+        if(o['__medio__']===undefined)   o['__medio__']   = r['medio de pago']||r['Medio de pago']||'';
+        if(o['__importe__']===undefined) o['__importe__'] = r['importe']||r['Importe']||'';
+        if(o['__desc__']===undefined)    o['__desc__']    = r['descuentos']||r['Descuentos']||'-';
+        if(o['__reden__']===undefined)   o['__reden__']   = r['redenciones']||r['Redenciones']||'-';
+        if(o['__fecha__']===undefined)   o['__fecha__']   = r['fecha']||r['Fecha']||'';
+        if(o['__hora__']===undefined)    o['__hora__']    = r['hora']||r['Hora']||'';
+        if(o['__prod__']===undefined)    o['__prod__']    = r['productos']||r['Productos']||'';
+        if(o['__turno__']===undefined)   o['__turno__']   = getTurno(o['__hora__']);
+        // Normalizar fecha: DD/MM/YYYY -> YYYY-MM-DD
+        const f = o['__fecha__']||'';
+        const fm = f.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if(fm) o['__fecha__'] = fm[3]+'-'+fm[2].padStart(2,'0')+'-'+fm[1].padStart(2,'0');
         return o;
       });
 
-      // Preguntar si reemplazar o fusionar solo si hay datos
-      let modo = 'reemplazar';
+      // Si hay datos existentes fusionar, si no reemplazar directo
       if(allRows.length > 0){
-        const opc = confirm(
-          'Ya tenés ' + allRows.length + ' transacciones guardadas.
-
-' +
-          'OK = REEMPLAZAR todo con el backup
-' +
-          'Cancelar = FUSIONAR (agregar al historial existente)'
-        );
-        modo = opc ? 'reemplazar' : 'fusionar';
-      }
-
-      if(modo === 'reemplazar'){
-        allRows = rowsNormalizadas;
-        archivosLog = backup.archivos || [];
-      } else {
-        allRows = [...allRows, ...rowsNormalizadas];
+        allRows = [...allRows, ...rowsOk];
         archivosLog = [...archivosLog, ...(backup.archivos||[])];
+      } else {
+        allRows = rowsOk;
+        archivosLog = backup.archivos || [];
       }
 
       guardarStorage();
@@ -448,18 +437,12 @@ function importarBackup(file){
       actualizarStorageBar();
       document.getElementById('zone-main').classList.add('loaded');
       document.getElementById('status-main').textContent =
-        '✓ Backup restaurado — ' + allRows.length + ' transacciones';
-
+        '✓ Backup cargado — ' + allRows.length + ' transacciones · ' +
+        (backup.periodo ? backup.periodo.desde + ' al ' + backup.periodo.hasta : '');
       renderAll();
 
-      setTimeout(()=>{
-        alert('✅ Backup cargado correctamente.
-' + allRows.length + ' transacciones.
-Período: ' + (backup.periodo?.desde||'') + ' al ' + (backup.periodo?.hasta||''));
-      }, 300);
-
     }catch(err){
-      alert('Error leyendo el backup: ' + err.message);
+      alert('Error: ' + err.message);
     }
   };
   reader.readAsText(file, 'UTF-8');
