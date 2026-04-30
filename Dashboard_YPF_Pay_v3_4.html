@@ -391,54 +391,80 @@ function importarBackup(file){
   reader.onload = function(e){
     try{
       const backup = JSON.parse(e.target.result);
-      // Validar formato
+
+      // Validar formato — aceptar cualquier versión
       if(!backup.rows || !Array.isArray(backup.rows)){
         alert('Archivo inválido. No es un backup de YPF Pay Dashboard.');
         return;
       }
-      if(backup.version !== 3){
-        if(!confirm(`El backup es de una versión anterior (v${backup.version||'?'}). Puede haber diferencias. ¿Continuar?`)) return;
-      }
-      // Preguntar si reemplazar o fusionar
+
+      // Asegurarse que cada row tenga las keys canónicas
+      // Si vienen de una versión anterior sin __area__ etc, intentar reconstruirlas
+      const rowsNormalizadas = backup.rows.map(r => {
+        // Si ya tiene keys canónicas, está bien
+        if(r['__area__'] !== undefined) return r;
+        // Si no, intentar reconstruir desde keys normalizadas
+        const o = Object.assign({}, r);
+        o['__area__']    = r['area']    || r['Area']    || r['Área']    || '';
+        o['__motor__']   = r['motor de pago detalle'] || r['Motor de pago detalle'] || r['motor de pago'] || r['Motor de pago'] || '';
+        o['__medio__']   = r['medio de pago'] || r['Medio de pago'] || '';
+        o['__importe__'] = r['importe'] || r['Importe'] || '';
+        o['__desc__']    = r['descuentos'] || r['Descuentos'] || '';
+        o['__reden__']   = r['redenciones'] || r['Redenciones'] || '';
+        o['__estado__']  = r['estado'] || r['Estado'] || '';
+        o['__fecha__']   = r['fecha']  || r['Fecha']  || '';
+        o['__hora__']    = r['hora']   || r['Hora']   || '';
+        o['__prod__']    = r['productos'] || r['Productos'] || '';
+        o['__vend__']    = r['__vend__'] || '';
+        o['__cliente__'] = r['cliente'] || r['Cliente'] || '';
+        o['__turno__']   = r['__turno__'] || getTurno(o['__hora__']);
+        return o;
+      });
+
+      // Preguntar si reemplazar o fusionar solo si hay datos
       let modo = 'reemplazar';
       if(allRows.length > 0){
         const opc = confirm(
-          `Ya tenés ${allRows.length} transacciones guardadas.\n\n` +
-          `OK = REEMPLAZAR todo con el backup\n` +
-          `Cancelar = FUSIONAR (agregar los datos del backup a los existentes)`
+          'Ya tenés ' + allRows.length + ' transacciones guardadas.
+
+' +
+          'OK = REEMPLAZAR todo con el backup
+' +
+          'Cancelar = FUSIONAR (agregar al historial existente)'
         );
         modo = opc ? 'reemplazar' : 'fusionar';
       }
+
       if(modo === 'reemplazar'){
-        allRows = backup.rows;
+        allRows = rowsNormalizadas;
         archivosLog = backup.archivos || [];
       } else {
-        // Fusionar: agregar solo los archivos que no estén ya
-        const archivosCargados = new Set(archivosLog.map(a=>a.filename));
-        const nuevosArchivos = (backup.archivos||[]).filter(a=>!archivosCargados.has(a.filename));
-        const nuevasRows = backup.rows.filter(r=>{
-          // Incluir solo rows de archivos nuevos
-          return true; // simplificado — agregar todo y deduplicar por fecha+motor+importe
-        });
-        allRows = [...allRows, ...nuevasRows];
-        archivosLog = [...archivosLog, ...nuevosArchivos];
+        allRows = [...allRows, ...rowsNormalizadas];
+        archivosLog = [...archivosLog, ...(backup.archivos||[])];
       }
+
       guardarStorage();
       actualizarFiltros();
       actualizarStorageBar();
-      renderAll();
       document.getElementById('zone-main').classList.add('loaded');
       document.getElementById('status-main').textContent =
-        `✓ Backup restaurado — ${allRows.length} transacciones · período ${backup.periodo?.desde||''} → ${backup.periodo?.hasta||''}`;
-      alert(`✅ Backup importado correctamente.\n${allRows.length} transacciones cargadas.\nPeríodo: ${backup.periodo?.desde||''} al ${backup.periodo?.hasta||''}`);
+        '✓ Backup restaurado — ' + allRows.length + ' transacciones';
+
+      renderAll();
+
+      setTimeout(()=>{
+        alert('✅ Backup cargado correctamente.
+' + allRows.length + ' transacciones.
+Período: ' + (backup.periodo?.desde||'') + ' al ' + (backup.periodo?.hasta||''));
+      }, 300);
+
     }catch(err){
       alert('Error leyendo el backup: ' + err.message);
     }
   };
   reader.readAsText(file, 'UTF-8');
-  // Limpiar el input para permitir importar el mismo archivo de nuevo
-  document.getElementById('inp-backup').value  = '';
-  document.getElementById('inp-backup2').value = '';
+  try{ document.getElementById('inp-backup').value  = ''; }catch(e){}
+  try{ document.getElementById('inp-backup2').value = ''; }catch(e){}
 }
 
 function guardarStorage(){
