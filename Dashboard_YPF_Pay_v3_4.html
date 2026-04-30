@@ -160,6 +160,63 @@ input[type=number]{height:33px;padding:0 10px;border-radius:7px;border:1px solid
 </head>
 <body>
 
+<!-- PANTALLA DE LOGIN -->
+<div id="login-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0b0d11;z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#111318;border:1px solid #1f2232;border-radius:16px;padding:40px 36px;width:100%;max-width:380px;text-align:center;">
+    <div style="width:56px;height:56px;background:linear-gradient(135deg,#1a6b3c,#0d4a28);border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:Syne,sans-serif;font-weight:800;font-size:16px;color:#4ade80;margin:0 auto 20px;">YPF</div>
+    <div style="font-family:Syne,sans-serif;font-weight:800;font-size:22px;color:#dde1f0;margin-bottom:6px;">YPF Pay Dashboard</div>
+    <div style="font-family:DM Mono,monospace;font-size:11px;color:#454960;margin-bottom:28px;">Daniel Fissore · APIES 02229</div>
+    <input type="password" id="login-pass" placeholder="Contraseña"
+      style="width:100%;height:44px;padding:0 16px;border-radius:9px;border:1px solid #272b3d;background:#181b24;color:#dde1f0;font-size:14px;font-family:DM Sans,sans-serif;margin-bottom:10px;outline:none;"
+      onkeydown="if(event.key==='Enter')verificarPass()">
+    <div id="login-error" style="font-size:11px;color:#f87171;margin-bottom:10px;min-height:16px;font-family:DM Mono,monospace;"></div>
+    <button onclick="verificarPass()"
+      style="width:100%;height:44px;border-radius:9px;border:none;background:#27c993;color:#000;font-family:Syne,sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .2s;"
+      onmouseover="this.style.background='#1fa876'" onmouseout="this.style.background='#27c993'">
+      Ingresar
+    </button>
+    <div style="font-size:10px;color:#454960;margin-top:20px;font-family:DM Mono,monospace;">YPF Pay Control · v3</div>
+  </div>
+</div>
+
+<script>
+// Hash simple de la contraseña (no almacena la clave en texto plano)
+const PASS_HASH = '013d7a2913436290e5463bffb2f697d79ba9389d5c6cd8ffc4576044b442edcb';
+
+async function hashPass(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function verificarPass(){
+  const pass = document.getElementById('login-pass').value;
+  if(!pass){ document.getElementById('login-error').textContent='Ingresá la contraseña'; return; }
+  const h = await hashPass(pass);
+  // Verificar contra el hash almacenado
+  const stored = localStorage.getItem('ypf_session');
+  if(stored && stored === h){
+    document.getElementById('login-screen').style.display='none';
+    return;
+  }
+  if(h === PASS_HASH){
+    localStorage.setItem('ypf_session', h);
+    document.getElementById('login-screen').style.display='none';
+  } else {
+    document.getElementById('login-error').textContent='Contraseña incorrecta';
+    document.getElementById('login-pass').value='';
+    document.getElementById('login-pass').focus();
+  }
+}
+
+// Verificar si ya hay sesión activa
+(async()=>{
+  const stored = localStorage.getItem('ypf_session');
+  if(stored && stored === PASS_HASH){
+    document.getElementById('login-screen').style.display='none';
+  }
+})();
+</script>
+
 <div class="topbar">
   <div class="brand">
     <div class="brand-logo">YPF</div>
@@ -168,6 +225,7 @@ input[type=number]{height:33px;padding:0 10px;border-radius:7px;border:1px solid
   </div>
   <div class="topbar-r">
     <span class="topbar-fecha" id="fecha-top"></span>
+    <button onclick="cerrarSesion()" style="height:28px;padding:0 12px;border-radius:6px;border:1px solid #272b3d;background:transparent;color:#454960;font-size:11px;font-family:DM Sans,sans-serif;cursor:pointer;" onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='#454960'">Cerrar sesión</button>
   </div>
 </div>
 
@@ -1162,6 +1220,12 @@ function exportarExcel(){
   const periodoStr = desde===hasta ? desde : `${desde}_al_${hasta}`;
   const filename = `YPF_Pay_${periodoStr.replace(/\//g,'-')}.xlsx`;
   XLSX.writeFile(wb, filename);
+}
+
+function cerrarSesion(){
+  if(!confirm('¿Cerrar sesión?')) return;
+  localStorage.removeItem('ypf_session');
+  location.reload();
 }
 
 // ── INIT ──────────────────────────────────────────────────────────
