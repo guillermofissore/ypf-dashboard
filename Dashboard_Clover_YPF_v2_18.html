@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Clover - YPF Daniel Fissore</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+  :root {
+    --bg:#0d0f14; --bg2:#13161e; --bg3:#1a1d27;
+    --border:#252836; --border2:#2e3245;
+    --accent:#4f7cff; --accent2:#7c9fff;
+    --green:#2dd4a0; --green-bg:#0d2b22;
+    --amber:#f59e0b; --amber-bg:#2a1f08;
+    --red:#f87171;   --red-bg:#2a1010;
+    --text:#e8eaf2;  --text2:#8b90a7; --text3:#555a72;
+    --mono:'DM Mono',monospace; --sans:'DM Sans',sans-serif; --display:'Syne',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;min-height:100vh;}
+
+  .topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:100;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);}
+  .brand-name{font-family:var(--display);font-weight:700;font-size:15px;}
+  .brand-sub{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:4px;}
+  .topbar-date{font-family:var(--mono);font-size:11px;color:var(--text3);}
+
+  .nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 28px;display:flex;gap:0;overflow-x:auto;}
+  .nav-tab{padding:11px 18px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;}
+  .nav-tab:hover{color:var(--text2);}
+  .nav-tab.active{color:var(--accent2);border-bottom-color:var(--accent);}
+
+  .main{padding:24px 28px;max-width:1280px;}
+  .panel{display:none;} .panel.active{display:block;}
+
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:14px;}
+  .card-title{font-family:var(--display);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:12px;}
+
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px;}
+  .metric{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .metric .lbl{font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:5px;}
+  .metric .val{font-family:var(--display);font-size:19px;font-weight:700;color:var(--text);line-height:1.1;}
+  .metric .sub{font-size:10px;color:var(--text3);margin-top:2px;font-family:var(--mono);}
+  .metric.green .val{color:var(--green);} .metric.amber .val{color:var(--amber);}
+  .metric.blue .val{color:var(--accent2);} .metric.red .val{color:var(--red);}
+
+  .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
+  @media(max-width:700px){.upload-grid{grid-template-columns:1fr;}}
+  .upload-zone{border:1.5px dashed var(--border2);border-radius:10px;padding:24px 18px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg3);}
+  .upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(79,124,255,.05);}
+  .upload-zone.loaded{border-color:var(--green);border-style:solid;background:rgba(45,212,160,.05);}
+  .upload-icon{font-size:26px;margin-bottom:7px;}
+  .upload-title{font-family:var(--display);font-size:13px;font-weight:600;margin-bottom:3px;}
+  .upload-sub{font-size:11px;color:var(--text3);line-height:1.5;}
+  .upload-status{font-size:11px;color:var(--green);margin-top:5px;font-family:var(--mono);}
+  .upload-zone input[type=file]{display:none;}
+  .format-badge{display:inline-block;background:rgba(79,124,255,.15);color:var(--accent2);border-radius:4px;padding:2px 7px;font-size:10px;font-family:var(--mono);margin-top:4px;}
+
+  .table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border);}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  thead tr{background:var(--bg3);}
+  th{padding:8px 10px;text-align:left;font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;}
+  th.r,td.r{text-align:right;} th.c,td.c{text-align:center;}
+  td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text2);font-size:12px;}
+  tbody tr:hover{background:rgba(255,255,255,.02);}
+  tbody tr:last-child td{border-bottom:none;}
+  .td-b{font-weight:500;color:var(--text);}
+  .td-g{color:var(--green);font-family:var(--mono);font-weight:500;}
+  .td-a{color:var(--amber);font-family:var(--mono);}
+  .td-r{color:var(--red);font-family:var(--mono);}
+  .td-bl{color:var(--accent2);font-family:var(--mono);}
+  .td-m{font-family:var(--mono);}
+  .td-s{color:var(--text3);font-size:11px;}
+  .tfoot-row td{background:var(--bg3);font-weight:600;color:var(--text);border-top:1px solid var(--border2);}
+
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;font-family:var(--mono);}
+  .bg{background:var(--green-bg);color:var(--green);}
+  .ba{background:var(--amber-bg);color:var(--amber);}
+  .bb{background:rgba(79,124,255,.15);color:var(--accent2);}
+  .br{background:var(--red-bg);color:var(--red);}
+  .bgr{background:var(--bg3);color:var(--text3);}
+
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;border:1px solid var(--border2);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;background:var(--bg3);color:var(--text2);font-family:var(--sans);}
+  .btn:hover{border-color:var(--accent);color:var(--accent2);}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+
+  .cruce-card{border-radius:10px;padding:14px 16px;margin-bottom:10px;border:1px solid var(--border);}
+  .cruce-ok{background:var(--green-bg);border-color:var(--green);}
+  .cruce-warn{background:var(--amber-bg);border-color:var(--amber);}
+  .cruce-err{background:var(--red-bg);border-color:var(--red);}
+  .cruce-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .cruce-tipo{font-family:var(--display);font-size:13px;font-weight:600;}
+  .cruce-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .ci .ci-lbl{font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:2px;}
+  .ci .ci-val{font-family:var(--mono);font-size:13px;font-weight:500;}
+  .pct-bar{height:4px;border-radius:2px;background:rgba(255,255,255,.06);margin-top:4px;}
+  .pct-fill{height:100%;border-radius:2px;}
+
+  .veredicto{display:flex;align-items:center;gap:12px;padding:13px 16px;border-radius:10px;margin-bottom:14px;font-family:var(--display);font-size:14px;font-weight:600;}
+  .veredicto.ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green);}
+  .veredicto.warn{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);}
+  .veredicto.err{background:var(--red-bg);color:var(--red);border:1px solid var(--red);}
+  .veredicto.neutral{background:var(--bg3);color:var(--text2);border:1px solid var(--border);}
+
+  .alert{background:rgba(79,124,255,.08);border:1px solid rgba(79,124,255,.25);border-radius:8px;padding:11px 14px;font-size:12px;color:var(--accent2);line-height:1.6;margin-bottom:14px;}
+  .step{display:flex;gap:14px;margin-bottom:14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+  .step-num{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-family:var(--display);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .step-title{font-family:var(--display);font-weight:600;font-size:13px;color:var(--text);margin-bottom:4px;}
+  .step-desc{font-size:12px;color:var(--text2);line-height:1.6;}
+  .step-code{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--accent2);line-height:1.6;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:700px){.two-col{grid-template-columns:1fr;}}
+  .lbl-tag{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:4px;}
+  .empty{text-align:center;padding:36px 20px;color:var(--text3);font-size:12px;}
+  .empty-icon{font-size:30px;margin-bottom:8px;}
+  input[type=number],input[type=text],select{height:34px;padding:0 10px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:13px;font-family:var(--mono);width:100%;}
+  .search-box{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .search-box input{flex:1;min-width:180px;}
+  .pill{display:inline-flex;align-items:center;gap:4px;background:rgba(79,124,255,.1);border:1px solid rgba(79,124,255,.2);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--accent2);font-family:var(--mono);}
+  .row-fail{background:rgba(248,113,113,.05);}
+  .tag-formato{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-family:var(--mono);font-weight:600;background:rgba(45,212,160,.15);color:var(--green);margin-left:6px;}
+</style>
+</head>
+<body>
+
+<!-- PANTALLA DE LOGIN -->
+<div id="login-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0d0f14;z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#13161e;border:1px solid #252836;border-radius:16px;padding:40px 36px;width:100%;max-width:380px;text-align:center;">
+    <div style="width:56px;height:56px;background:linear-gradient(135deg,#1F3864,#2E75B6);border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;font-weight:800;font-size:13px;color:#8aabff;margin:0 auto 20px;">CLO</div>
+    <div style="font-family:Arial,sans-serif;font-weight:800;font-size:22px;color:#e8eaf2;margin-bottom:6px;">Clover Control</div>
+    <div style="font-family:monospace;font-size:11px;color:#555a72;margin-bottom:28px;">YPF Daniel Fissore · APIES 02229</div>
+    <input type="password" id="login-pass" placeholder="Contraseña"
+      style="width:100%;height:44px;padding:0 16px;border-radius:9px;border:1px solid #2e3245;background:#1a1d27;color:#e8eaf2;font-size:14px;font-family:Arial,sans-serif;margin-bottom:10px;outline:none;box-sizing:border-box;"
+      >
+    <div id="login-error" style="font-size:11px;color:#f87171;margin-bottom:10px;min-height:16px;font-family:monospace;"></div>
+    <button id="login-btn"
+      style="width:100%;height:44px;border-radius:9px;border:none;background:#378ADD;color:#fff;font-family:Arial,sans-serif;font-weight:700;font-size:14px;cursor:pointer;">
+      Ingresar
+    </button>
+    <div style="font-size:10px;color:#555a72;margin-top:20px;font-family:monospace;">Clover Control · v2</div>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-dot"></div>
+    <span class="brand-name">CLOVER CONTROL</span>
+    <span class="brand-sub">YPF · Daniel Fissore</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span class="topbar-date" id="fecha-top"></span>
+    <button onclick="cerrarSesion()" style="height:28px;padding:0 12px;border-radius:6px;border:1px solid #2e3245;background:transparent;color:#555a72;font-size:11px;font-family:DM Sans,sans-serif;cursor:pointer;" onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='#555a72'">Cerrar sesión</button>
+  </div>
+</div>
+
+<div class="nav">
+  <div class="nav-tab active" onclick="showPanel('instrucciones',this)">📋 Cómo usar</div>
+  <div class="nav-tab" onclick="showPanel('clover',this)">📂 Clover</div>
+  <div class="nav-tab" onclick="showPanel('transacciones',this)">🔎 Transacciones</div>
+  <div class="nav-tab" onclick="showPanel('banco',this)">🏦 Banco</div>
+  <div class="nav-tab" onclick="showPanel('cruce',this)">Verificación</div>
+  <div class="nav-tab" onclick="showPanel('config',this)">⚙️ Aranceles</div>
+</div>
+
+<div class="main">
+
+<!-- ══ INSTRUCCIONES ══════════════════════════════════════════════ -->
+<div id="panel-instrucciones" class="panel active">
+  <div class="card">
+    <div class="card-title">Cómo funciona</div>
+    <div class="alert">🌐 Accedé desde cualquier dispositivo en <strong>guillermofissore.github.io/ypf-dashboard/Dashboard_Clover_YPF_v2.html</strong> · Contraseña: ypf2229<br>💾 Los datos se guardan automáticamente en el navegador. Usá <strong>Exportar backup</strong> para llevar los datos entre dispositivos.</div>
+
+    <div class="step"><div class="step-num">1</div><div>
+      <div class="step-title">Dos formatos de Clover compatibles</div>
+      <div class="step-desc">
+        <strong>Formato A - Resumen por medio de pago:</strong> Clover → Reportes → Información general de las ventas → Exportar CSV.<br>
+        <strong>Formato B - Pagos individuales (Payments):</strong> Clover → Reportes → Pagos → Exportar CSV. Contiene cada transacción con hora, tarjeta, estado, nota QR, etc.<br>
+        El dashboard detecta automáticamente cuál es cuál al cargarlo.
+      </div>
+      <div class="step-code">
+        Formato A: columnas → Medio de pago | Total de ventas brutas | Devoluciones<br>
+        Formato B: columnas → Fecha del pago | ID del pago | Marca de la tarjeta | Importe | Resultado
+      </div>
+    </div></div>
+
+    <div class="step"><div class="step-num">2</div><div>
+      <div class="step-title">Cargar Clover (pestaña 📂 Clover)</div>
+      <div class="step-desc">Arrastrá o seleccioná el CSV. Podés cargar varios archivos uno a uno - se acumulan. El sistema agrupa por día de venta y calcula aranceles, IVA y fechas de acreditación por días hábiles.</div>
+    </div></div>
+
+    <div class="step"><div class="step-num">3</div><div>
+      <div class="step-title">Buscar transacciones individuales (pestaña 🔎 Transacciones)</div>
+      <div class="step-desc">Solo disponible con Formato B. Buscá por importe, tarjeta, comprobante, QR ID, cliente o fecha. Podés ver las rechazadas (FAIL) separadas.</div>
+    </div></div>
+
+    <div class="step"><div class="step-num">4</div><div>
+      <div class="step-title">Cargar extracto del banco (pestaña 🏦 Banco)</div>
+      <div class="step-desc">CSV del homebanking BNA - Últimos movimientos → Exportar CSV. Columnas: Fecha, Comprobante, Concepto, Importe.</div>
+    </div></div>
+
+    <div class="step"><div class="step-num">5</div><div>
+      <div class="step-title">Verificar acreditaciones (pestaña Verificación)</div>
+      <div class="step-desc">Cruza automáticamente Clover vs banco por fecha y monto. Te dice si calza, si está pendiente (fecha futura) o si hay diferencia.</div>
+    </div></div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Aranceles vigentes</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);"><span class="badge ba">QR / Transf.</span><span style="font-family:var(--mono);color:var(--amber);">0.968% c/IVA</span></div>
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);"><span class="badge bg">Débito</span><span style="font-family:var(--mono);color:var(--green);">1.210% c/IVA</span></div>
+        <div style="display:flex;justify-content:space-between;padding:7px 0;"><span class="badge bb">Crédito</span><span style="font-family:var(--mono);color:var(--accent2);">2.178% c/IVA</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Feriados Argentina 2026</div>
+      <div style="font-size:11px;color:var(--text3);font-family:var(--mono);line-height:2.1;">01/01 · 16/02 · 17/02 · 24/03 · 27/03 · 02/04<br>01/05 · 25/05 · 15/06 · 20/06 · 09/07 · 17/08<br>12/10 · 20/11 · 08/12 · 25/12</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CLOVER ════════════════════════════════════════════════════ -->
+<div id="panel-clover" class="panel">
+  <div class="upload-grid">
+    <div class="upload-zone" id="zone-clover" onclick="document.getElementById('input-clover').click()"
+         ondragover="event.preventDefault();this.classList.add('drag')"
+         ondragleave="this.classList.remove('drag')"
+         ondrop="dropFile(event,'clover')">
+      <input type="file" id="input-clover" accept=".csv,.xlsx,.xls" onchange="loadClover(this.files[0])">
+      <div class="upload-icon">📊</div>
+      <div class="upload-title">Reporte Clover</div>
+      <div class="upload-sub">CSV o Excel (.xlsx) de Clover<br>Podés cargar varios días</div>
+      <div><span class="format-badge">Formato A</span> <span class="format-badge">Formato B</span></div>
+      <div class="upload-status" id="status-clover"></div>
+      <div style="margin-top:8px;">
+        <button class="btn" onclick="abrirBackup()" style="font-size:11px;padding:4px 12px;color:#4f7cff;border-color:rgba(79,124,255,.3);background:rgba(79,124,255,.08);">⬆️ Restaurar desde backup</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:0;">
+      <div class="card-title">Archivos cargados</div>
+      <div id="archivos-cargados" style="font-size:12px;color:var(--text3);">Ninguno todavía.</div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn" onclick="exportarBackup()" style="font-size:11px;padding:5px 12px;color:#2dd4a0;border-color:rgba(45,212,160,.3);">⬇️ Exportar backup</button>
+        <button class="btn" onclick="abrirBackup()" style="font-size:11px;padding:5px 12px;color:#4f7cff;border-color:rgba(79,124,255,.3);">⬆️ Importar backup</button>
+        <button class="btn" onclick="exportarExcel()" style="font-size:11px;padding:5px 12px;color:#f59e0b;border-color:rgba(245,158,11,.3);">📊 Exportar Excel</button>
+        <button class="btn" onclick="limpiarClover()" style="font-size:11px;padding:5px 12px;color:#f87171;border-color:rgba(248,113,113,.3);">🗑 Limpiar todo</button>
+      </div>
+    </div>
+  </div>
+  <div id="clover-metrics" class="metrics"></div>
+  <div id="clover-content"><div class="empty"><div class="empty-icon">📂</div>Cargá un CSV de Clover para ver el resumen</div></div>
+</div>
+
+<!-- ══ TRANSACCIONES ═════════════════════════════════════════════ -->
+<div id="panel-transacciones" class="panel">
+  <div id="tx-sin-datos"><div class="empty"><div class="empty-icon">🔎</div>Cargá un CSV de Pagos de Clover (Formato B) para buscar transacciones individuales</div></div>
+  <div id="tx-panel" style="display:none;">
+    <div class="card">
+      <div class="card-title">Buscar transacción</div>
+      <div class="search-box">
+        <input type="text" id="tx-buscar" placeholder="Importe, tarjeta, QR ID, cliente, comprobante..." oninput="filtrarTx()">
+        <select id="tx-filtro-tipo" onchange="filtrarTx()" style="width:140px;">
+          <option value="">Todos los tipos</option>
+          <option value="qr">QR / Transf.</option>
+          <option value="debito">Débito</option>
+          <option value="credito">Crédito</option>
+          <option value="prepaid">Prepaid</option>
+        </select>
+        <select id="tx-filtro-estado" onchange="filtrarTx()" style="width:130px;">
+          <option value="">Todos</option>
+          <option value="SUCCESS">Solo exitosas</option>
+          <option value="FAIL">Solo rechazadas</option>
+        </select>
+        <select id="tx-filtro-fecha" onchange="filtrarTx()" style="width:150px;" id="tx-filtro-fecha">
+          <option value="">Todas las fechas</option>
+        </select>
+      </div>
+      <div id="tx-stats" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;"></div>
+    </div>
+    <div class="card">
+      <div class="card-title" id="tx-tabla-titulo">Resultados</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th style="width:120px;">Fecha/Hora</th>
+            <th>Medio / Marca</th>
+            <th style="width:55px;" class="c">Tarjeta</th>
+            <th class="r">Importe</th>
+            <th class="r">Neto est.</th>
+            <th style="width:80px;" class="c">Acredita</th>
+            <th style="width:65px;" class="c">Estado</th>
+            <th>Cliente / Nota</th>
+            <th style="width:70px;" class="c">Recibo</th>
+          </tr></thead>
+          <tbody id="tx-tbody"></tbody>
+        </table>
+      </div>
+      <div id="tx-empty" class="empty" style="display:none;padding:20px;">Sin resultados para ese filtro.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BANCO ══════════════════════════════════════════════════════ -->
+<div id="panel-banco" class="panel">
+  <div class="upload-grid">
+    <div class="upload-zone" id="zone-banco" onclick="document.getElementById('input-banco').click()"
+         ondragover="event.preventDefault();this.classList.add('drag')"
+         ondragleave="this.classList.remove('drag')"
+         ondrop="dropFile(event,'banco')">
+      <input type="file" id="input-banco" accept=".csv,.xlsx,.xls" onchange="loadBanco(this.files[0])">
+      <div class="upload-icon">🏦</div>
+      <div class="upload-title">Extracto Bancario BNA</div>
+      <div class="upload-sub">CSV homebanking - Últimos movimientos<br>Columnas: Fecha, Comprobante, Concepto, Importe</div>
+      <div class="upload-status" id="status-banco"></div>
+    </div>
+    <div class="card" style="margin-bottom:0;">
+      <div class="card-title">Buscar en el banco</div>
+      <div class="search-box" style="margin-bottom:0;">
+        <input type="text" id="banco-buscar" placeholder="Importe, comprobante, concepto..." oninput="filtrarBanco()">
+      </div>
+    </div>
+  </div>
+  <div id="banco-metrics" class="metrics"></div>
+  <div id="banco-content"><div class="empty"><div class="empty-icon">🏦</div>Cargá el extracto del banco</div></div>
+</div>
+
+<!-- ══ CRUCE ══════════════════════════════════════════════════════ -->
+<div id="panel-cruce" class="panel">
+  <div id="cruce-content"><div class="empty"><div class="empty-icon">✅</div>Cargá Clover y el extracto del banco para ver la verificación</div></div>
+</div>
+
+<!-- ══ CONFIG ════════════════════════════════════════════════════ -->
+<div id="panel-config" class="panel">
+  <div class="card">
+    <div class="card-title">Aranceles Clover</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;">
+      <div><label class="lbl-tag">QR / Transferencia (%)</label><input type="number" id="cfg-qr" value="0.8" step="0.01" min="0"></div>
+      <div><label class="lbl-tag">Débito / Prepaid (%)</label><input type="number" id="cfg-deb" value="1.0" step="0.01" min="0"></div>
+      <div><label class="lbl-tag">Crédito 1 cuota (%)</label><input type="number" id="cfg-cred" value="1.8" step="0.01" min="0"></div>
+      <div><label class="lbl-tag">IVA sobre el arancel (%)</label><input type="number" id="cfg-iva" value="21" step="0.1" min="0" oninput="globalIva=parseFloat(this.value)||21;renderCfgTabla();"></div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <button class="btn primary" onclick="aplicarConfig()">Aplicar</button>
+      <button class="btn" onclick="resetConfig()">Restaurar</button>
+      <span id="cfg-msg" style="font-size:11px;color:var(--green);font-family:var(--mono);"></span>
+    </div>
+  </div>
+  <div class="card"><div class="card-title">Resumen aranceles con IVA</div><div id="cfg-tabla"></div></div>
+</div>
+
+</div><!-- /main -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const PASS_HASH = '013d7a2913436290e5463bffb2f697d79ba9389d5c6cd8ffc4576044b442edcb';
+
+async function hashPass(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function verificarPass(){
+  const pass = document.getElementById('login-pass').value;
+  if(!pass){ document.getElementById('login-error').textContent='Ingresa la contrasena'; return; }
+  try{
+    const h = await hashPass(pass);
+    const stored = localStorage.getItem('clover_session');
+    if(stored && stored === h){ document.getElementById('login-screen').style.display='none'; return; }
+    if(h === PASS_HASH){
+      localStorage.setItem('clover_session', h);
+      document.getElementById('login-screen').style.display='none';
+    } else {
+      document.getElementById('login-error').textContent='Contrasena incorrecta';
+      document.getElementById('login-pass').value='';
+      document.getElementById('login-pass').focus();
+    }
+  } catch(err){
+    // Fallback si crypto.subtle no está disponible
+    if(pass === 'ypf2229'){
+      localStorage.setItem('clover_session', PASS_HASH);
+      document.getElementById('login-screen').style.display='none';
+    } else {
+      document.getElementById('login-error').textContent='Contrasena incorrecta';
+      document.getElementById('login-pass').value='';
+    }
+  }
+}
+
+(async()=>{
+  try{
+    const stored = localStorage.getItem('clover_session');
+    if(stored && stored === PASS_HASH){
+      document.getElementById('login-screen').style.display='none';
+    }
+  }catch(e){}
+})();
+
+// ── FERIADOS ────────────────────────────────────────────────────
+const FERIADOS = new Set(['2026-01-01','2026-02-16','2026-02-17','2026-03-24','2026-03-27',
+  '2026-04-02','2026-05-01','2026-05-25','2026-06-15','2026-06-20',
+  '2026-07-09','2026-08-17','2026-10-12','2026-11-20','2026-12-08','2026-12-25']);
+
+// ── CONFIG ──────────────────────────────────────────────────────
+let CFG = {qr:0.8,deb:1.0,cred:1.8,iva:21};
+let globalIva = 21;
+function atotal(base){ return (base + base*CFG.iva/100)/100; }
+
+// ── DATOS ───────────────────────────────────────────────────────
+let cloverDias  = [];   // [{fecha, tarjetas:[{nombre,tipo,bruto}], fuente}]
+let txDetalle   = [];   // transacciones individuales (Formato B)
+let bancoMovs   = [];
+let archivosLog = [];
+
+// ── UTILS ───────────────────────────────────────────────────────
+const MESES = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+function fmt(n){if(isNaN(n)||n===null)return'—';return'$ '+Math.abs(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtPct(n){return n.toFixed(3)+'%';}
+function fmtDate(s){if(!s)return'—';const[y,m,d]=s.split('-');return`${d}/${m}/${y}`;}
+function parseNum(s){if(!s)return 0;return parseFloat(String(s).replace(/\./g,'').replace(',','.').replace(/[^0-9.\-]/g,''))||0;}
+function esHabil(d){const w=d.getDay();if(w===0||w===6)return false;return!FERIADOS.has(d.toISOString().split('T')[0]);}
+function addHab(isoDate,dias){
+  if(dias===0)return isoDate;
+  const d=new Date(isoDate+'T00:00:00');
+  let c=0;while(c<dias){d.setDate(d.getDate()+1);if(esHabil(d))c++;}
+  return d.toISOString().split('T')[0];
+}
+function todayISO(){return new Date().toISOString().split('T')[0];}
+function parseDate(s){
+  if(!s)return null; s=String(s).trim();
+  let m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(m)return`${m[3].length===2?'20'+m[3]:m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return`${m[1]}-${m[2]}-${m[3]}`;
+  // "01-Apr-2026 08:36 PM ART"
+  m=s.match(/^(\d{2})-([A-Za-z]{3})-(\d{4})/);
+  if(m&&MESES[m[2]])return`${m[3]}-${MESES[m[2]]}-${m[1].padStart(2,'0')}`;
+  return null;
+}
+function parseFechaPago(s){
+  // "01-Apr-2026 08:36 PM ART" -> {fecha: "2026-04-01", hora: "08:36 PM"}
+  const m=s.match(/^(\d{2})-([A-Za-z]{3})-(\d{4})\s+(\d{2}:\d{2}\s*[AP]M)/);
+  if(m&&MESES[m[2]])return{fecha:`${m[3]}-${MESES[m[2]]}-${m[1]}`,hora:m[4]};
+  return{fecha:parseDate(s)||'',hora:''};
+}
+
+function clasificar(medio,marca){
+  const n=(medio+' '+marca).toLowerCase();
+  if(n.includes('qr')||n.includes('transfer')||n.includes('mercado pago')||
+     n.includes('modo transfer')||n.includes('naranja')||n.includes('claro pay')||
+     n.includes('modo transf')||n.includes('posnet'))return'qr';
+  if(n.includes('prepag')||n.includes('prepaid'))return'prepaid';
+  if(n.includes('modo mastercard debit')||n.includes('modo mc deb'))return'debito';
+  if(n.includes('deb')||n.includes('débito')||n.includes('debit'))return'debito';
+  if(n.includes('cred')||n.includes('crédito')||n.includes('visa')||
+     n.includes('mastercard')||n.includes('amex'))return'credito';
+  return'otro';
+}
+function arMap(tipo){if(tipo==='qr')return CFG.qr;if(tipo==='debito'||tipo==='prepaid')return CFG.deb;if(tipo==='credito')return CFG.cred;return CFG.deb;}
+function diasHab(tipo){if(tipo==='qr')return 0;if(tipo==='debito'||tipo==='prepaid')return 1;return 2;}
+function badgeTipo(tipo){
+  const m={qr:'ba',debito:'bg',credito:'bb',prepaid:'bgr',otro:'bgr'};
+  const l={qr:'QR',debito:'Débito',credito:'Crédito',prepaid:'Prepaid',otro:'Otro'};
+  return`<span class="badge ${m[tipo]||'bgr'}">${l[tipo]||tipo}</span>`;
+}
+
+// ── CSV PARSER ──────────────────────────────────────────────────
+function splitLine(line,sep){
+  const res=[];let cur='';let inQ=false;
+  for(const c of line){if(c==='"'){inQ=!inQ;}else if(c===sep&&!inQ){res.push(cur);cur='';}else cur+=c;}
+  res.push(cur);return res;
+}
+function parseCSV(text){
+  const lines=text.trim().split(/\r?\n/);if(!lines.length)return[];
+  const sep=lines[0].includes(';')?';':',';
+  const headers=lines[0].split(sep).map(h=>h.trim().replace(/^["']|["']$/g,'').toLowerCase());
+  const rows=[];
+  for(let i=1;i<lines.length;i++){
+    if(!lines[i].trim())continue;
+    const cols=splitLine(lines[i],sep);
+    const obj={};headers.forEach((h,j)=>obj[h]=(cols[j]||'').trim().replace(/^["']|["']$/g,''));
+    rows.push(obj);
+  }
+  return rows;
+}
+
+// ── DETECTAR FORMATO ────────────────────────────────────────────
+function detectFormato(rows){
+  if(!rows.length)return'desconocido';
+  const keys=Object.keys(rows[0]).join(' ').toLowerCase();
+  // Formato B: tiene "fecha del pago" y "resultado"
+  if(keys.includes('fecha del pago')||keys.includes('resultado')||keys.includes('id del pago'))return'B';
+  // Formato A: tiene "medio de pago" y "total de ventas"
+  if(keys.includes('medio de pago')||keys.includes('total de ventas')||keys.includes('importe recolect'))return'A';
+  return'desconocido';
+}
+
+// ── DROP ────────────────────────────────────────────────────────
+function dropFile(e,target){
+  e.preventDefault();
+  document.getElementById('zone-'+target).classList.remove('drag');
+  const f=e.dataTransfer.files[0];
+  if(!f)return;
+  if(target==='clover')loadClover(f);else loadBanco(f);
+}
+
+// ── LOAD CLOVER ─────────────────────────────────────────────────
+function loadClover(file){
+  if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='xlsx'||ext==='xls'){
+    const reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        if(typeof XLSX==='undefined'){ alert('La libreria Excel no cargo. Verifica tu conexion.'); return; }
+        const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const json=XLSX.utils.sheet_to_json(ws,{defval:'',raw:false});
+        // Normalizar keys a minúsculas
+        const rows=json.map(r=>{const o={};Object.keys(r).forEach(k=>o[k.toLowerCase().trim()]=String(r[k]||'').trim());return o;});
+        const fmt=detectFormato(rows);
+        if(fmt==='B')procesarFormatoB(rows,file.name);
+        else if(fmt==='A')procesarFormatoA(rows,file.name);
+        else alert('No pude identificar el formato. Verifica que sea un reporte de Clover.');
+      }catch(err){ alert('Error Excel: '+err.message); }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const rows=parseCSV(e.target.result);
+        const fmt=detectFormato(rows);
+        if(fmt==='B')procesarFormatoB(rows,file.name);
+        else if(fmt==='A')procesarFormatoA(rows,file.name);
+        else alert('No pude identificar el formato CSV. Verifica que sea un reporte de Clover.');
+      }catch(err){alert('Error: '+err.message);}
+    };
+    reader.readAsText(file,'UTF-8');
+  }
+}
+
+// ── FORMATO A (resumen por medio de pago) ───────────────────────
+function procesarFormatoA(rows,filename){
+  let fechaVenta=null;
+  const m=filename.match(/(\d{2})_(\d{2})_(\d{4})/);
+  if(m)fechaVenta=`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  if(!fechaVenta){const inp=prompt('No pude detectar la fecha.\nIngresá la fecha de la venta (DD/MM/AAAA):');fechaVenta=parseDate(inp);}
+  if(!fechaVenta){alert('Fecha invalida.');return;}
+  const keys=Object.keys(rows[0]);
+  function findCol(...cands){for(const c of cands){const k=keys.find(k=>k.includes(c));if(k)return k;}return null;}
+  const colMedio=findCol('medio','nombre','tarjeta','descripci');
+  const colBruto=findCol('bruto','ventas','importe recolect');
+  const colDevol=findCol('devol');
+  const tarjetas=[];
+  for(const row of rows){
+    const nombre=row[colMedio]||row[keys[0]]||'';
+    if(!nombre||nombre.toLowerCase().includes('total'))continue;
+    let bruto=parseNum(row[colBruto]||row[keys[1]]||0);
+    const dev=parseNum(row[colDevol]||0);
+    bruto=bruto-Math.abs(dev);
+    if(bruto<=0)continue;
+    tarjetas.push({nombre,tipo:clasificar(nombre,''),bruto});
+  }
+  if(!tarjetas.length){alert('Sin datos en el CSV.');return;}
+  guardarDia(fechaVenta,tarjetas,'A',filename);
+  archivosLog.push({filename,formato:'A',fecha:fechaVenta,txs:tarjetas.length});
+  document.getElementById('zone-clover').classList.add('loaded');
+  document.getElementById('status-clover').textContent=`✓ Último: ${filename} (Formato A)`;
+  guardarStorage();
+  renderClover();renderCruce();renderArchivosLog();
+}
+
+// ── FORMATO B (pagos individuales) ──────────────────────────────
+function procesarFormatoB(rows,filename){
+  // Agrupar por fecha
+  const porFecha={};
+  const nuevasTx=[];
+  for(const row of rows){
+    const res=(row['resultado']||'').trim();
+    const fechaRaw=row['fecha del pago']||'';
+    const {fecha,hora}=parseFechaPago(fechaRaw);
+    if(!fecha)continue;
+    const medio=row['medio de pago']||'';
+    const marca=row['marca de la tarjeta']||'';
+    const tarjeta=row['número de tarjeta']||'';
+    const importe=parseFloat(row['importe']||0)||0;
+    const cliente=row['nombre del cliente']||'';
+    const nota=row['nota']||'';
+    const recibo=row['núm. de recibo']||'';
+    const auth=row['código de autorización de la tarjeta']||'';
+    const txNum=row['núm. de transacción']||'';
+    const lote=row['núm. de lote']||'';
+    const idPago=row['id del pago']||'';
+    const idExterno=row['id de pago externo']||'';
+    const tipo=clasificar(medio,marca);
+
+    const tx={fecha,hora,medio,marca,tarjeta,importe,cliente,nota,recibo,auth,txNum,lote,idPago,idExterno,tipo,resultado:res};
+    nuevasTx.push(tx);
+
+    if(res==='SUCCESS'&&importe>0){
+      if(!porFecha[fecha])porFecha[fecha]=[];
+      porFecha[fecha].push({nombre:marca||medio,tipo,bruto:importe});
+    }
+  }
+  // Guardar días
+  Object.keys(porFecha).forEach(fecha=>{
+    guardarDia(fecha,porFecha[fecha],'B',filename);
+  });
+  // Acumular transacciones detalle
+  nuevasTx.forEach(tx=>{
+    if(!txDetalle.find(t=>t.idPago&&t.idPago===tx.idPago&&tx.idPago))txDetalle.push(tx);
+  });
+  const totalDias=Object.keys(porFecha).length;
+  const totalTx=nuevasTx.filter(t=>t.resultado==='SUCCESS').length;
+  const totalFail=nuevasTx.filter(t=>t.resultado==='FAIL').length;
+  archivosLog.push({filename,formato:'B',fecha:`${totalDias} días`,txs:totalTx,fail:totalFail});
+  document.getElementById('zone-clover').classList.add('loaded');
+  document.getElementById('status-clover').textContent=`✓ Último: ${filename} (Formato B - ${totalTx} ok, ${totalFail} rechazadas)`;
+  guardarStorage();renderClover();renderTxPanel();renderCruce();renderArchivosLog();
+}
+
+function guardarDia(fecha,tarjetas,fmtTipo,filename){
+  // Agregar o combinar
+  const idx=cloverDias.findIndex(d=>d.fecha===fecha&&d.fuente===filename);
+  if(idx>=0)cloverDias[idx]={fecha,tarjetas,fuente:filename,fmtTipo};
+  else cloverDias.push({fecha,tarjetas,fuente:filename,fmtTipo});
+  cloverDias.sort((a,b)=>a.fecha.localeCompare(b.fecha));
+}
+
+function limpiarClover(){
+  cloverDias=[];txDetalle=[];archivosLog=[];
+  document.getElementById('zone-clover').classList.remove('loaded');
+  document.getElementById('status-clover').textContent='';
+  document.getElementById('clover-metrics').innerHTML='';
+  document.getElementById('clover-content').innerHTML='<div class="empty"><div class="empty-icon">📂</div>Cargá un CSV de Clover</div>';
+  document.getElementById('tx-panel').style.display='none';
+  document.getElementById('tx-sin-datos').style.display='block';
+  renderArchivosLog();renderCruce();
+}
+
+function renderArchivosLog(){
+  const el=document.getElementById('archivos-cargados');
+  if(!archivosLog.length){el.textContent='Ninguno todavía.';return;}
+  el.innerHTML=archivosLog.map(a=>`
+    <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);">
+      <span class="badge ${a.formato==='B'?'bb':'bg'}" style="font-size:9px;">Fmt ${a.formato}</span>
+      <span style="color:var(--text2);font-size:11px;font-family:var(--mono);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.filename}</span>
+      <span style="color:var(--text3);font-size:10px;white-space:nowrap;">${a.txs} tx${a.fail?` · <span style="color:var(--red)">${a.fail} FAIL</span>`:''}</span>
+    </div>`).join('');
+}
+
+// ── RENDER CLOVER ───────────────────────────────────────────────
+function renderClover(){
+  if(!cloverDias.length)return;
+  let totalB=0,totalC=0,totalN=0;
+  cloverDias.forEach(d=>d.tarjetas.forEach(t=>{
+    const at=atotal(arMap(t.tipo));
+    totalB+=t.bruto;totalC+=t.bruto*at;totalN+=t.bruto-t.bruto*at;
+  }));
+  document.getElementById('clover-metrics').innerHTML=`
+    <div class="metric"><div class="lbl">Ventas brutas</div><div class="val">${fmt(totalB)}</div><div class="sub">${cloverDias.length} día(s)</div></div>
+    <div class="metric amber"><div class="lbl">Comisiones</div><div class="val">${fmt(totalC)}</div><div class="sub">arancel + IVA</div></div>
+    <div class="metric green"><div class="lbl">Neto a recibir</div><div class="val">${fmt(totalN)}</div></div>`;
+
+  let html='';
+  cloverDias.forEach(dia=>{
+    let db=0,dc=0,dn=0;
+    const rowsHtml=dia.tarjetas.map(t=>{
+      const at=atotal(arMap(t.tipo));
+      const com=t.bruto*at;const net=t.bruto-com;
+      const fa=addHab(dia.fecha,diasHab(t.tipo));
+      db+=t.bruto;dc+=com;dn+=net;
+      return`<tr><td class="td-b">${t.nombre}</td><td>${badgeTipo(t.tipo)}</td>
+        <td class="r td-m">${fmt(t.bruto)}</td><td class="r td-a">-${fmt(com)}</td>
+        <td class="r td-g">${fmt(net)}</td>
+        <td class="c td-s">${diasHab(t.tipo)===0?'Inmediato':fmtDate(fa)}</td></tr>`;
+    }).join('');
+    const tag=`<span class="tag-formato">Fmt ${dia.fmtTipo||'?'}</span>`;
+    html+=`<div class="card"><div class="card-title">${fmtDate(dia.fecha)} ${tag}</div>
+      <div class="table-wrap"><table><thead><tr>
+        <th>Tarjeta/Medio</th><th>Tipo</th><th class="r">Bruto</th>
+        <th class="r">Comisión</th><th class="r">Neto</th><th class="c">Acredita</th>
+      </tr></thead><tbody>${rowsHtml}</tbody>
+      <tfoot><tr class="tfoot-row"><td colspan="2">TOTAL ${fmtDate(dia.fecha)}</td>
+        <td class="r td-m">${fmt(db)}</td><td class="r td-a">-${fmt(dc)}</td>
+        <td class="r td-g">${fmt(dn)}</td><td></td></tr></tfoot></table></div>`;
+    // Acreditaciones mini
+    const grupos={};
+    dia.tarjetas.forEach(t=>{const fa=addHab(dia.fecha,diasHab(t.tipo));if(!grupos[fa])grupos[fa]={neto:0,bruto:0};const at=atotal(arMap(t.tipo));grupos[fa].bruto+=t.bruto;grupos[fa].neto+=t.bruto-t.bruto*at;});
+    html+=`<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">`;
+    Object.keys(grupos).sort().forEach(fa=>{const g=grupos[fa];const ok=fa<=todayISO();
+      html+=`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 13px;min-width:150px;">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:3px;">${fa===dia.fecha?'INMEDIATO':'ACREDITA'}</div>
+        <div style="font-family:var(--display);font-weight:700;font-size:14px;color:${ok?'var(--green)':'var(--text)'};">${fmtDate(fa)}</div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--green);margin-top:1px;">${fmt(g.neto)}</div>
+      </div>`;});
+    html+=`</div></div>`;
+  });
+  document.getElementById('clover-content').innerHTML=html;
+}
+
+// ── RENDER TRANSACCIONES (Formato B) ────────────────────────────
+let txFiltradas=[];
+function renderTxPanel(){
+  if(!txDetalle.length){
+    document.getElementById('tx-panel').style.display='none';
+    document.getElementById('tx-sin-datos').style.display='block';
+    return;
+  }
+  document.getElementById('tx-panel').style.display='block';
+  document.getElementById('tx-sin-datos').style.display='none';
+  // Poblar filtro fechas
+  const fechas=[...new Set(txDetalle.map(t=>t.fecha))].sort().reverse();
+  const sel=document.getElementById('tx-filtro-fecha');
+  sel.innerHTML='<option value="">Todas las fechas</option>'+fechas.map(f=>`<option value="${f}">${fmtDate(f)}</option>`).join('');
+  filtrarTx();
+}
+
+function filtrarTx(){
+  const q=(document.getElementById('tx-buscar').value||'').toLowerCase();
+  const tipoF=document.getElementById('tx-filtro-tipo').value;
+  const estadoF=document.getElementById('tx-filtro-estado').value;
+  const fechaF=document.getElementById('tx-filtro-fecha').value;
+
+  txFiltradas=txDetalle.filter(t=>{
+    if(tipoF&&t.tipo!==tipoF)return false;
+    if(estadoF&&t.resultado!==estadoF)return false;
+    if(fechaF&&t.fecha!==fechaF)return false;
+    if(q){
+      const haystack=[t.importe,t.tarjeta,t.cliente,t.recibo,t.auth,t.txNum,t.lote,t.idPago,t.idExterno,t.nota,t.marca,t.medio,fmtDate(t.fecha)].join(' ').toLowerCase();
+      if(!haystack.includes(q))return false;
+    }
+    return true;
+  });
+
+  const ok=txFiltradas.filter(t=>t.resultado==='SUCCESS');
+  const fail=txFiltradas.filter(t=>t.resultado==='FAIL');
+  const totalImporte=ok.reduce((s,t)=>s+t.importe,0);
+
+  document.getElementById('tx-stats').innerHTML=`
+    <span class="pill">🔍 ${txFiltradas.length} resultados</span>
+    <span class="pill" style="background:rgba(45,212,160,.1);border-color:rgba(45,212,160,.2);color:var(--green);">✓ ${ok.length} exitosas - ${fmt(totalImporte)}</span>
+    ${fail.length?`<span class="pill" style="background:var(--red-bg);border-color:var(--red);color:var(--red);">✗ ${fail.length} rechazadas</span>`:''}`;
+
+  document.getElementById('tx-tabla-titulo').textContent=`Resultados (${txFiltradas.length})`;
+
+  const MAX=500;
+  const mostrar=txFiltradas.slice(0,MAX);
+  const tbody=document.getElementById('tx-tbody');
+  const empty=document.getElementById('tx-empty');
+
+  if(!mostrar.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+
+  tbody.innerHTML=mostrar.map(t=>{
+    const esFail=t.resultado==='FAIL';
+    const at=atotal(arMap(t.tipo));
+    const neto=esFail?0:t.importe*(1-at);
+    const fa=esFail?'—':fmtDate(addHab(t.fecha,diasHab(t.tipo)));
+    const infoNota=t.nota?(t.nota.match(/Billetera:\s*([^,]+)/)||[])[1]||'':t.cliente;
+    return`<tr class="${esFail?'row-fail':''}">
+      <td class="td-m td-s">${fmtDate(t.fecha)}<br>${t.hora}</td>
+      <td>${badgeTipo(t.tipo)} <span class="td-s">${t.marca||t.medio}</span></td>
+      <td class="c td-m td-s">${t.tarjeta||'—'}</td>
+      <td class="r td-m">${fmt(t.importe)}</td>
+      <td class="r ${esFail?'td-s':'td-g'}">${esFail?'FAIL':fmt(neto)}</td>
+      <td class="c td-s">${esFail?'—':fa}</td>
+      <td class="c"><span class="badge ${esFail?'br':'bg'}">${t.resultado}</span></td>
+      <td class="td-s" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${infoNota||'—'}</td>
+      <td class="c td-m td-s">${t.recibo||'—'}</td>
+    </tr>`;
+  }).join('');
+  if(txFiltradas.length>MAX){
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td colspan="9" style="text-align:center;color:var(--text3);font-size:11px;padding:10px;">Mostrando ${MAX} de ${txFiltradas.length} - aplicá más filtros para ver el resto</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+// ── BANCO ───────────────────────────────────────────────────────
+function loadBanco(file){
+  if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='xlsx'||ext==='xls'){
+    const reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        if(typeof XLSX==='undefined'){ alert('Sin libreria Excel.'); return; }
+        const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        // Convertir a array de arrays para detectar la fila de headers
+        const arr=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        // Buscar la fila que tiene 'Fecha' como primer campo
+        let headerRow=-1;
+        for(let i=0;i<arr.length;i++){
+          const v=String(arr[i][0]||'').toLowerCase().trim();
+          if(v==='fecha'){headerRow=i;break;}
+        }
+        if(headerRow<0){ alert('No encontre la fila de headers del banco.'); return; }
+        const headers=arr[headerRow].map(h=>String(h||'').toLowerCase().trim());
+        const rows=arr.slice(headerRow+1).filter(r=>r[0]).map(r=>{
+          const o={};headers.forEach((h,i)=>o[h]=String(r[i]||'').trim());
+          return o;
+        });
+        procesarBanco(rows);
+      }catch(err){ alert('Error XLS: '+err.message); }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        // Saltear filas de encabezado del BNA (antes de la fila "Fecha,...")
+        const text=e.target.result;
+        const lines=text.split(/
+?
+/);
+        let startLine=0;
+        for(let i=0;i<lines.length;i++){
+          if(lines[i].toLowerCase().includes('fecha')&&lines[i].toLowerCase().includes('concepto')){
+            startLine=i; break;
+          }
+        }
+        const cleanText=lines.slice(startLine).join('
+');
+        procesarBanco(parseCSV(cleanText));
+      }
+      catch(err){alert('Error: '+err.message);}
+    };
+    reader.readAsText(file,'latin1');
+  }
+}
+
+function procesarBanco(rows){
+  bancoMovs=[];
+  const r0=rows[0]||{};const keys=Object.keys(r0);
+  function findCol(...c){for(const x of c){const k=keys.find(k=>k.toLowerCase().includes(x.toLowerCase()));if(k!==undefined)return k;}return null;}
+  const cF=findCol('fecha');const cC=findCol('concepto','descripci','detalle');const cI=findCol('importe','credito','monto','haber');
+  for(const row of rows){
+    const fecha=parseDate(row[cF]||row[keys[0]]||'');if(!fecha)continue;
+    const concepto=(row[cC]||row[keys[1]]||'').trim();
+    const importe=parseNum(row[cI]||row[keys[2]]||0);
+    if(importe<=0)continue;
+    const comp=(row['comprobante']||row[keys[1]]||'').trim();
+    bancoMovs.push({fecha,concepto,importe,comp});
+  }
+  if(!bancoMovs.length){alert('Sin movimientos positivos en el extracto.');return;}
+  document.getElementById('zone-banco').classList.add('loaded');
+  document.getElementById('status-banco').textContent=`✓ ${bancoMovs.length} movimientos cargados`;
+  renderBanco();renderCruce();
+}
+
+function filtrarBanco(){
+  renderBanco(document.getElementById('banco-buscar').value.toLowerCase());
+}
+
+function detectTipoBanco(c){
+  const x=c.toLowerCase();
+  if(x.includes('debin')||x.includes('qr'))return'qr';
+  if(x.includes('master deb')||x.includes('visa deb')||x.includes('deb 24')||x.includes('deb24'))return'debito';
+  if(x.includes('mastercard')||x.includes('visa')||x.includes('cred 24')||x.includes('cred24'))return'credito';
+  return null;
+}
+
+function renderBanco(q=''){
+  if(!bancoMovs.length)return;
+  const movs=q?bancoMovs.filter(m=>[m.concepto,m.comp,String(m.importe),fmtDate(m.fecha)].join(' ').toLowerCase().includes(q)):bancoMovs;
+  const total=movs.reduce((s,m)=>s+m.importe,0);
+  const porFecha={};
+  movs.forEach(m=>{if(!porFecha[m.fecha])porFecha[m.fecha]=[];porFecha[m.fecha].push(m);});
+  document.getElementById('banco-metrics').innerHTML=`
+    <div class="metric green"><div class="lbl">Total acreditado</div><div class="val">${fmt(total)}</div><div class="sub">${movs.length} movimientos</div></div>
+    <div class="metric blue"><div class="lbl">Fechas</div><div class="val">${Object.keys(porFecha).length}</div></div>`;
+  let html='';
+  Object.keys(porFecha).sort().reverse().forEach(fecha=>{
+    const ms=porFecha[fecha];const tot=ms.reduce((s,m)=>s+m.importe,0);
+    html+=`<div class="card"><div class="card-title">${fmtDate(fecha)}</div>
+      <div class="table-wrap"><table><thead><tr><th>Comprobante</th><th>Concepto</th><th class="r">Importe</th><th>Tipo Clover</th></tr></thead><tbody>`;
+    ms.forEach(m=>{const t=detectTipoBanco(m.concepto);
+      html+=`<tr><td class="td-m td-s">${m.comp}</td><td class="td-b">${m.concepto}</td>
+        <td class="r td-g">${fmt(m.importe)}</td>
+        <td>${t?badgeTipo(t):'<span class="badge bgr">Otro</span>'}</td></tr>`;});
+    html+=`</tbody><tfoot><tr class="tfoot-row"><td colspan="2">Total ${fmtDate(fecha)}</td><td class="r td-g">${fmt(tot)}</td><td></td></tr></tfoot></table></div></div>`;
+  });
+  document.getElementById('banco-content').innerHTML=html||'<div class="empty">Sin resultados.</div>';
+}
+
+// ── CRUCE ───────────────────────────────────────────────────────
+function renderCruce(){
+  if(!cloverDias.length||!bancoMovs.length){
+    document.getElementById('cruce-content').innerHTML='<div class="empty"><div class="empty-icon">✅</div>Cargá Clover y el extracto del banco para ver la verificación</div>';
+    return;
+  }
+  let todoOk=true;let html='';let totalEsp=0;
+
+  cloverDias.forEach(dia=>{
+    const grupos={};
+    dia.tarjetas.forEach(t=>{
+      const fa=addHab(dia.fecha,diasHab(t.tipo));
+      if(!grupos[fa])grupos[fa]={bruto:0,com:0,neto:0,tipos:[]};
+      const at=atotal(arMap(t.tipo));
+      const com=t.bruto*at;
+      grupos[fa].bruto+=t.bruto;grupos[fa].com+=com;grupos[fa].neto+=t.bruto-com;
+      grupos[fa].tipos.push(t.tipo);
+    });
+    Object.keys(grupos).forEach(fa=>{
+      const tipos=[...new Set(grupos[fa].tipos)];
+      let label='Varios';
+      if(tipos.every(t=>t==='qr'))label='QR / Transferencias';
+      else if(tipos.every(t=>t==='debito'||t==='prepaid'))label='Débito + Prepaid';
+      else if(tipos.every(t=>t==='credito'))label='Crédito';
+      grupos[fa].label=label;grupos[fa].tipoPrincipal=tipos[0];
+    });
+
+    html+=`<div class="card"><div class="card-title">Venta ${fmtDate(dia.fecha)} <span class="tag-formato">Fmt ${dia.fmtTipo||'?'}</span></div>`;
+
+    Object.keys(grupos).sort().forEach(fa=>{
+      const g=grupos[fa];
+      const movsBanco=bancoMovs.filter(m=>m.fecha===fa);
+      const tiposExp=g.tipoPrincipal==='qr'?['qr']:g.tipoPrincipal==='credito'?['credito']:['debito'];
+      let totalBancoFecha=movsBanco.filter(m=>tiposExp.some(t=>detectTipoBanco(m.concepto)===t)).reduce((s,m)=>s+m.importe,0);
+      if(totalBancoFecha===0&&movsBanco.length>0)totalBancoFecha=movsBanco.reduce((s,m)=>s+m.importe,0);
+
+      const encontrado=totalBancoFecha>0;
+      const calza=totalBancoFecha>=g.neto;
+      const esFutura=fa>todayISO();
+      const pct=totalBancoFecha>0?Math.min(100,g.neto/totalBancoFecha*100):0;
+      totalEsp+=g.neto;
+      if(!calza&&!esFutura)todoOk=false;
+
+      let cls,icono,estadoTxt,badgeCls;
+      if(esFutura){cls='cruce-warn';icono='📅';estadoTxt='Fecha futura';badgeCls='ba';}
+      else if(!encontrado){cls='cruce-warn';icono='⚠️';estadoTxt='No encontrado';badgeCls='ba';todoOk=false;}
+      else if(calza){cls='cruce-ok';icono='✅';estadoTxt='CALZA';badgeCls='bg';}
+      else{cls='cruce-err';icono='❌';estadoTxt='DIFERENCIA';badgeCls='br';todoOk=false;}
+
+      html+=`<div class="cruce-card ${cls}" style="margin-bottom:10px;">
+        <div class="cruce-hdr">
+          <div>
+            <div class="cruce-tipo">${icono} ${g.label}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;font-family:var(--mono);">Venta ${fmtDate(dia.fecha)} → acredita ${fmtDate(fa)}</div>
+          </div>
+          <span class="badge ${badgeCls}">${estadoTxt}</span>
+        </div>
+        <div class="cruce-grid">
+          <div class="ci"><div class="ci-lbl">Neto esperado (Clover)</div>
+            <div class="ci-val" style="color:var(--green);">${fmt(g.neto)}</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px;">bruto ${fmt(g.bruto)}</div></div>
+          <div class="ci"><div class="ci-lbl">Total banco ${fmtDate(fa)}</div>
+            <div class="ci-val" style="color:${encontrado?'var(--accent2)':'var(--text3)'};">${encontrado?fmt(totalBancoFecha):'Sin movimientos'}</div>
+            ${encontrado?`<div style="font-size:10px;color:var(--text3);margin-top:2px;">tu parte: ${pct.toFixed(1)}%</div>`:''}</div>
+          <div class="ci"><div class="ci-lbl">Diferencia</div>
+            <div class="ci-val" style="color:${calza&&encontrado?'var(--green)':esFutura?'var(--amber)':'var(--red)'};">${encontrado?fmt(totalBancoFecha-g.neto):'—'}</div>
+            ${encontrado&&calza?`<div class="pct-bar" style="margin-top:5px;"><div class="pct-fill" style="width:${pct.toFixed(0)}%;background:var(--green);"></div></div>`:''}</div>
+        </div>
+      </div>`;
+    });
+    html+=`</div>`;
+  });
+
+  const verd=todoOk
+    ?`<div class="veredicto ok">Todo calza - acreditaciones verificadas correctamente</div>`
+    :cloverDias.every(d=>Object.keys(groupFechas(d)).every(fa=>fa>todayISO()))
+      ?`<div class="veredicto warn">⏳ Todas las fechas son futuras - pendiente de verificar</div>`
+      :`<div class="veredicto err">❌ Hay diferencias o movimientos no encontrados - revisá los marcados</div>`;
+
+  document.getElementById('cruce-content').innerHTML=verd+html;
+}
+
+function groupFechas(dia){
+  const g={};dia.tarjetas.forEach(t=>{const fa=addHab(dia.fecha,diasHab(t.tipo));g[fa]=true;});return g;
+}
+
+// ── CONFIG ──────────────────────────────────────────────────────
+function aplicarConfig(){
+  CFG.qr=parseFloat(document.getElementById('cfg-qr').value)||0.8;
+  CFG.deb=parseFloat(document.getElementById('cfg-deb').value)||1.0;
+  CFG.cred=parseFloat(document.getElementById('cfg-cred').value)||1.8;
+  CFG.iva=parseFloat(document.getElementById('cfg-iva').value)||21;
+  globalIva=CFG.iva;
+  renderCfgTabla();renderClover();renderCruce();
+  const m=document.getElementById('cfg-msg');m.textContent='Aplicado';setTimeout(()=>m.textContent='',2000);
+}
+function resetConfig(){
+  CFG={qr:0.8,deb:1.0,cred:1.8,iva:21};globalIva=21;
+  ['cfg-qr','cfg-deb','cfg-cred'].forEach((id,i)=>document.getElementById(id).value=[0.8,1.0,1.8][i]);
+  document.getElementById('cfg-iva').value=21;
+  renderCfgTabla();
+}
+function renderCfgTabla(){
+  const rows=[['QR / Transferencia',CFG.qr,'ba'],['Débito + Prepaid',CFG.deb,'bg'],['Crédito 1 cuota',CFG.cred,'bb']];
+  const dh=[0,1,2];
+  document.getElementById('cfg-tabla').innerHTML=`<div class="table-wrap"><table><thead><tr>
+    <th>Tipo</th><th class="r">Base (%)</th><th class="r">IVA (${CFG.iva}%)</th><th class="r">Total c/IVA</th><th class="c">Días háb.</th>
+  </tr></thead><tbody>`+rows.map(([l,b,badge],i)=>{
+    const iva=b*CFG.iva/100;const total=b+iva;
+    return`<tr><td><span class="badge ${badge}">${l}</span></td>
+      <td class="r td-m">${b.toFixed(3)}%</td><td class="r td-m">+${iva.toFixed(3)}%</td>
+      <td class="r td-g">${total.toFixed(3)}%</td>
+      <td class="c td-s">${dh[i]===0?'Inmediato':dh[i]+' día(s)'}</td></tr>`;
+  }).join('')+`</tbody></table></div>`;
+}
+
+// ── NAV ─────────────────────────────────────────────────────────
+function showPanel(name,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if(el)el.classList.add('active');
+  if(name==='banco')renderBanco();
+  if(name==='cruce')renderCruce();
+}
+
+// ── STORAGE ─────────────────────────────────────────────────────
+const STORAGE_KEY_C = 'clover_rows_v2';
+const STORAGE_LOG_C = 'clover_log_v2';
+const STORAGE_BANCO = 'clover_banco_v2';
+
+function guardarStorage(){
+  try{
+    localStorage.setItem(STORAGE_KEY_C, JSON.stringify(cloverDias));
+    localStorage.setItem(STORAGE_LOG_C, JSON.stringify(archivosLog));
+    localStorage.setItem(STORAGE_BANCO,  JSON.stringify(bancoMovs));
+  }catch(e){ console.warn('Storage error:', e); }
+}
+
+function cargarStorage(){
+  try{
+    const d=localStorage.getItem(STORAGE_KEY_C);
+    const l=localStorage.getItem(STORAGE_LOG_C);
+    const b=localStorage.getItem(STORAGE_BANCO);
+    if(d) cloverDias  = JSON.parse(d);
+    if(l) archivosLog = JSON.parse(l);
+    if(b) bancoMovs   = JSON.parse(b);
+  }catch(e){ cloverDias=[]; archivosLog=[]; bancoMovs=[]; }
+}
+
+// ── BACKUP ───────────────────────────────────────────────────────
+function exportarBackup(){
+  if(!cloverDias.length){ alert('Sin datos de Clover para exportar.'); return; }
+  const fechas = cloverDias.map(d=>d.fecha).sort();
+  const backup = {
+    version: 2,
+    exportado: new Date().toLocaleString('es-AR'),
+    estacion: 'YPF Daniel Fissore - Clover',
+    periodo: { desde: fechas[0]||'', hasta: fechas[fechas.length-1]||'' },
+    cloverDias,
+    txDetalle,
+    bancoMovs,
+    archivosLog,
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `Clover_Backup_${new Date().toLocaleDateString('es-AR').replace(/\//g,'-')}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function abrirBackup(){
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.json'; inp.style.display = 'none';
+  let procesado = false;
+  inp.onchange = function(){
+    if(procesado) return; procesado = true;
+    if(this.files && this.files[0]) importarBackup(this.files[0]);
+    setTimeout(()=>{ try{ document.body.removeChild(inp); }catch(e){} }, 500);
+  };
+  function onFocus(){
+    setTimeout(()=>{
+      if(!procesado){ procesado=true; try{ document.body.removeChild(inp); }catch(e){} }
+      window.removeEventListener('focus', onFocus);
+    }, 300);
+  }
+  window.addEventListener('focus', onFocus);
+  document.body.appendChild(inp);
+  inp.click();
+}
+
+function importarBackup(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const backup = JSON.parse(e.target.result);
+      if(!backup.cloverDias || !Array.isArray(backup.cloverDias)){
+        alert('Archivo inválido. No es un backup de Clover Dashboard.');
+        return;
+      }
+      let modo = 'reemplazar';
+      if(cloverDias.length > 0){
+        const opc = confirm('Ya tenés ' + cloverDias.length + ' días de Clover cargados.\n\nOK = REEMPLAZAR todo con el backup\nCancelar = FUSIONAR (agregar al historial existente)');
+        modo = opc ? 'reemplazar' : 'fusionar';
+      }
+      if(modo === 'reemplazar'){
+        cloverDias  = backup.cloverDias  || [];
+        txDetalle   = backup.txDetalle   || [];
+        bancoMovs   = backup.bancoMovs   || [];
+        archivosLog = backup.archivosLog || [];
+      } else {
+        cloverDias  = [...cloverDias,  ...(backup.cloverDias ||[])];
+        txDetalle   = [...txDetalle,   ...(backup.txDetalle  ||[])];
+        bancoMovs   = [...bancoMovs,   ...(backup.bancoMovs  ||[])];
+        archivosLog = [...archivosLog, ...(backup.archivosLog||[])];
+      }
+      guardarStorage();
+      renderClover(); renderTxPanel(); renderBanco(); renderCruce(); renderArchivosLog();
+      document.getElementById('zone-clover').classList.add('loaded');
+      document.getElementById('status-clover').textContent =
+        'Backup cargado - ' + cloverDias.length + ' dias - ' +
+        (backup.periodo ? backup.periodo.desde + ' al ' + backup.periodo.hasta : '');
+      alert('Backup importado correctamente. ' + cloverDias.length + ' dias de Clover cargados.');
+    }catch(err){
+      alert('Error backup: ' + err.message);
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+// ── EXPORTAR EXCEL ────────────────────────────────────────────────
+function exportarExcel(){
+  if(!cloverDias.length){ alert('Sin datos de Clover para exportar.'); return; }
+  if(typeof XLSX==='undefined'){ alert('La libreria Excel no cargo. Verifica tu conexion.'); return; }
+
+  const wb = XLSX.utils.book_new();
+  const fechas = cloverDias.map(d=>d.fecha).sort();
+  const desde  = fmtDate(fechas[0]);
+  const hasta  = fmtDate(fechas[fechas.length-1]);
+
+  // ── HOJA 1: RESUMEN EJECUTIVO ──
+  let totDeb=0, totCred=0, totQR=0, totPrep=0;
+  cloverDias.forEach(dia=>{
+    dia.tarjetas.forEach(t=>{
+      if(t.tipo==='debito')  totDeb  += t.bruto;
+      else if(t.tipo==='credito') totCred += t.bruto;
+      else if(t.tipo==='qr')     totQR   += t.bruto;
+      else if(t.tipo==='prepaid')totPrep += t.bruto;
+    });
+  });
+  const arQR   = atotal(CFG.qr);
+  const arDeb  = atotal(CFG.deb);
+  const arCred = atotal(CFG.cred);
+  const netoQR  = totQR  *(1-arQR);
+  const netoDeb = (totDeb+totPrep)*(1-arDeb);
+  const netoCred= totCred*(1-arCred);
+  const totalBruto = totDeb+totCred+totQR+totPrep;
+  const totalNeto  = netoQR+netoDeb+netoCred;
+
+  const resumen = [
+    ['RESUMEN EJECUTIVO - CLOVER · YPF DANIEL FISSORE'],
+    ['Período: ' + desde + ' al ' + hasta],
+    ['Exportado: ' + new Date().toLocaleString('es-AR')],
+    [],
+    ['Tipo','Bruto','Arancel c/IVA','Neto estimado','Días acreditación'],
+    ['QR / Transferencia',       totQR,   arQR*100+'%',  netoQR,   'Inmediato'],
+    ['Débito + Prepaid',         totDeb+totPrep, arDeb*100+'%', netoDeb, '1 día hábil'],
+    ['Crédito 1 cuota',          totCred, arCred*100+'%', netoCred,  '2 días hábiles'],
+    ['TOTAL',                    totalBruto, '', totalNeto, ''],
+    [],
+    ['ARANCELES APLICADOS'],
+    ['QR', CFG.qr+'% + IVA '+CFG.iva+'%'],
+    ['Débito / Prepaid', CFG.deb+'% + IVA '+CFG.iva+'%'],
+    ['Crédito', CFG.cred+'% + IVA '+CFG.iva+'%'],
+  ];
+  const ws1 = XLSX.utils.aoa_to_sheet(resumen);
+  ws1['!cols'] = [{wch:25},{wch:18},{wch:16},{wch:18},{wch:18}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'Resumen Ejecutivo');
+
+  // ── HOJA 2: POR DÍA ──
+  const diaData = [['Fecha','QR Bruto','Débito Bruto','Crédito Bruto','Total Bruto','Neto Est.','Acred. QR','Acred. Débito','Acred. Crédito']];
+  cloverDias.forEach(dia=>{
+    let dQR=0,dDeb=0,dCred=0;
+    dia.tarjetas.forEach(t=>{
+      if(t.tipo==='qr')dQR+=t.bruto;
+      else if(t.tipo==='debito'||t.tipo==='prepaid')dDeb+=t.bruto;
+      else if(t.tipo==='credito')dCred+=t.bruto;
+    });
+    const bruto=dQR+dDeb+dCred;
+    const neto=dQR*(1-arQR)+dDeb*(1-arDeb)+dCred*(1-arCred);
+    const acredQR  = fmtDate(addHab(dia.fecha,0));
+    const acredDeb = fmtDate(addHab(dia.fecha,1));
+    const acredCred= fmtDate(addHab(dia.fecha,2));
+    diaData.push([fmtDate(dia.fecha),dQR,dDeb,dCred,bruto,neto,acredQR,acredDeb,acredCred]);
+  });
+  const ws2 = XLSX.utils.aoa_to_sheet(diaData);
+  ws2['!cols'] = [{wch:12},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Por Día');
+
+  // ── HOJA 3: DETALLE TRANSACCIONES ──
+  if(txDetalle.length){
+    const txHeader = ['Fecha','Hora','Tipo','Tarjeta/Medio','Importe','Auth','ID Pago','Nota','Estado'];
+    const txData   = [txHeader];
+    txDetalle.forEach(t=>{
+      txData.push([fmtDate(t.fecha),t.hora||'',t.tipo||'',t.nombre||'',t.bruto||0,t.auth||'',t.idPago||'',t.nota||'',t.resultado||'']);
+    });
+    const ws3 = XLSX.utils.aoa_to_sheet(txData);
+    ws3['!cols'] = [{wch:12},{wch:10},{wch:10},{wch:24},{wch:14},{wch:12},{wch:20},{wch:30},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, ws3, 'Detalle Transacciones');
+  }
+
+  // ── HOJA 4: BANCO ──
+  if(bancoMovs.length){
+    const bancoHeader = ['Fecha','Concepto','Importe'];
+    const bancoData   = [bancoHeader];
+    bancoMovs.forEach(m=>{ bancoData.push([m.fecha||'',m.concepto||'',m.importe||0]); });
+    const ws4 = XLSX.utils.aoa_to_sheet(bancoData);
+    ws4['!cols'] = [{wch:12},{wch:40},{wch:14}];
+    XLSX.utils.book_append_sheet(wb, ws4, 'Extracto Banco');
+  }
+
+  XLSX.writeFile(wb, 'Clover_' + (desde===hasta?desde:desde+'_al_'+hasta).replace(/\//g,'-') + '.xlsx');
+}
+
+function cerrarSesion(){
+  if(!confirm('¿Cerrar sesión?')) return;
+  localStorage.removeItem('clover_session');
+  location.reload();
+}
+
+// ── INIT ────────────────────────────────────────────────────────
+document.getElementById('fecha-top').textContent=new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+renderCfgTabla();
+// Conectar botón login via event listener (evita ReferenceError por orden de carga)
+document.getElementById('login-btn').addEventListener('click', verificarPass);
+document.getElementById('login-pass').addEventListener('keydown', function(e){ if(e.key==='Enter') verificarPass(); });
+// Cargar datos guardados
+cargarStorage();
+if(cloverDias.length){
+  renderClover(); renderTxPanel(); renderBanco(); renderCruce(); renderArchivosLog();
+  document.getElementById('zone-clover').classList.add('loaded');
+  document.getElementById('status-clover').textContent='💾 ' + cloverDias.length + ' días restaurados desde el historial';
+}
+</script>
+</body>
+</html>
