@@ -214,8 +214,8 @@ async function verificarPass(){
 <!-- ══ INSTRUCCIONES ══════════════════════════════════════════════ -->
 <div id="panel-instrucciones" class="panel active">
   <div class="card">
-    <div class="card-title">Cómo funciona — sin internet, todo local</div>
-    <div class="alert">📁 Guardá este archivo HTML en tu PC. Abrilo con doble clic en Chrome, Edge o Firefox. Tus datos nunca salen de tu computadora.</div>
+    <div class="card-title">Cómo funciona</div>
+    <div class="alert">🌐 Accedé desde cualquier dispositivo en <strong>guillermofissore.github.io/ypf-dashboard/Dashboard_Clover_YPF_v2.html</strong> · Contraseña: ypf2229<br>💾 Los datos se guardan automáticamente en el navegador. Usá <strong>Exportar backup</strong> para llevar los datos entre dispositivos.</div>
 
     <div class="step"><div class="step-num">1</div><div>
       <div class="step-title">Dos formatos de Clover compatibles</div>
@@ -1051,14 +1051,7 @@ function importarBackup(file){
       }
       let modo = 'reemplazar';
       if(cloverDias.length > 0){
-        const opc = confirm(
-          'Ya tenés ' + cloverDias.length + ' días de Clover cargados.
-
-' +
-          'OK = REEMPLAZAR todo con el backup
-' +
-          'Cancelar = FUSIONAR (agregar al historial existente)'
-        );
+        const opc = confirm('Ya tenés ' + cloverDias.length + ' días de Clover cargados.\n\nOK = REEMPLAZAR todo con el backup\nCancelar = FUSIONAR (agregar al historial existente)');
         modo = opc ? 'reemplazar' : 'fusionar';
       }
       if(modo === 'reemplazar'){
