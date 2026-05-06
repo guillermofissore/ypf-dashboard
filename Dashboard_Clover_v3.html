@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clover Control v3 - YPF Daniel Fissore</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap');
+:root{
+  --bg:#0d0f14;--bg2:#13161e;--bg3:#1a1d27;--bg4:#1e2230;
+  --border:#252836;--border2:#2e3245;
+  --accent:#4f7cff;--accent2:#7c9fff;--accent-bg:rgba(79,124,255,.08);
+  --green:#2dd4a0;--green-bg:#0d2b22;--green-b:rgba(45,212,160,.25);
+  --amber:#f59e0b;--amber-bg:#2a1f08;--amber-b:rgba(245,158,11,.25);
+  --red:#f87171;--red-bg:#2a1010;--red-b:rgba(248,113,113,.25);
+  --purple:#a78bfa;--purple-bg:#1a1030;
+  --text:#e8eaf2;--text2:#8b90a7;--text3:#555a72;
+  --mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;--display:'Syne',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;min-height:100vh;}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100;}
+.brand{display:flex;align-items:center;gap:10px;}
+.brand-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);}
+.brand-name{font-family:var(--display);font-weight:800;font-size:15px;}
+.brand-sub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:4px;}
+.topbar-r{display:flex;align-items:center;gap:8px;}
+.topbar-date{font-family:var(--mono);font-size:11px;color:var(--text3);}
+.nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;overflow-x:auto;}
+.tab{padding:11px 16px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;}
+.tab:hover{color:var(--text2);}
+.tab.active{color:var(--accent2);border-bottom-color:var(--accent);}
+.main{padding:20px 24px;max-width:1300px;}
+.panel{display:none;}.panel.active{display:block;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:14px;}
+.ct{font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:12px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+@media(max-width:800px){.two-col,.three-col{grid-template-columns:1fr;}}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin-bottom:14px;}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:13px 15px;position:relative;overflow:hidden;}
+.metric::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.metric.green::after{background:var(--green);}.metric.green .val{color:var(--green);}
+.metric.amber::after{background:var(--amber);}.metric.amber .val{color:var(--amber);}
+.metric.red::after{background:var(--red);}.metric.red .val{color:var(--red);}
+.metric.blue::after{background:var(--accent);}.metric.blue .val{color:var(--accent2);}
+.metric.neto{border-color:var(--green-b);background:var(--green-bg);}
+.metric.neto::after{background:var(--green);}.metric.neto .val{color:var(--green);font-size:21px;}
+.metric .lbl{font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.metric .val{font-family:var(--display);font-size:18px;font-weight:700;line-height:1.1;}
+.metric .s{font-size:10px;color:var(--text3);margin-top:3px;font-family:var(--mono);}
+.tw{overflow-x:auto;border-radius:8px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead tr{background:var(--bg3);}
+th{padding:8px 10px;text-align:left;font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;}
+th.r,td.r{text-align:right;}th.c,td.c{text-align:center;}
+td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text2);font-size:12px;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:rgba(255,255,255,.015);}
+.td-b{font-weight:500;color:var(--text);}.td-m{font-family:var(--mono);}
+.td-g{color:var(--green);font-family:var(--mono);font-weight:500;}
+.td-a{color:var(--amber);font-family:var(--mono);}
+.td-r{color:var(--red);font-family:var(--mono);}
+.td-s{color:var(--text3);font-size:11px;}
+tr.tfoot td{background:var(--bg3);font-weight:600;color:var(--text);border-top:1px solid var(--border2);}
+tr.tfoot-neto td{background:var(--green-bg);font-weight:700;font-size:13px;border-top:2px solid var(--green-b);}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;font-family:var(--mono);}
+.bg{background:var(--green-bg);color:var(--green);border:1px solid var(--green-b);}
+.ba{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-b);}
+.br{background:var(--red-bg);color:var(--red);border:1px solid var(--red-b);}
+.bb{background:var(--accent-bg);color:var(--accent2);border:1px solid rgba(79,124,255,.25);}
+.bgr{background:var(--bg3);color:var(--text3);border:1px solid var(--border);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:7px;border:1px solid var(--border2);font-size:12px;font-weight:500;cursor:pointer;background:var(--bg3);color:var(--text2);font-family:var(--sans);transition:all .15s;}
+.btn:hover{border-color:var(--green);color:var(--green);}
+.upload-zone{border:1.5px dashed var(--border2);border-radius:10px;padding:22px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg3);margin-bottom:12px;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(79,124,255,.04);}
+.upload-zone.loaded{border-color:var(--green);border-style:solid;background:rgba(45,212,160,.04);}
+.upload-zone input[type=file]{display:none;}
+.upload-icon{font-size:24px;margin-bottom:6px;}
+.upload-title{font-family:var(--display);font-size:13px;font-weight:700;margin-bottom:3px;}
+.upload-sub{font-size:11px;color:var(--text3);line-height:1.5;}
+.upload-status{font-size:11px;color:var(--green);margin-top:5px;font-family:var(--mono);}
+.cruce-row-ok td{background:rgba(45,212,160,.04);}
+.cruce-row-warn td{background:rgba(245,158,11,.04);}
+.cruce-row-err td{background:rgba(248,113,113,.04);}
+.cruce-row-fut td{background:rgba(79,124,255,.04);}
+.veredicto{border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:10px;}
+.veredicto.ok{background:var(--green-bg);border:1px solid var(--green-b);color:var(--green);}
+.veredicto.warn{background:var(--amber-bg);border:1px solid var(--amber-b);color:var(--amber);}
+.veredicto.err{background:var(--red-bg);border:1px solid var(--red-b);color:var(--red);}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.bar-lbl{font-size:11px;color:var(--text2);width:90px;flex-shrink:0;font-family:var(--mono);}
+.bar-outer{flex:1;height:16px;background:var(--bg3);border-radius:4px;overflow:hidden;}
+.bar-inner{height:100%;border-radius:4px;transition:width .5s ease;}
+.bar-val{font-size:11px;font-family:var(--mono);font-weight:500;width:100px;flex-shrink:0;text-align:right;}
+.search-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.search-row input,.search-row select{height:33px;padding:0 10px;border-radius:7px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:12px;font-family:var(--sans);}
+.search-row input{flex:1;min-width:160px;}
+.lbl-tag{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:4px;}
+input[type=number]{height:33px;padding:0 10px;border-radius:7px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:12px;font-family:var(--mono);width:100%;}
+.empty{text-align:center;padding:40px;color:var(--text3);font-size:12px;}
+.empty-icon{font-size:32px;margin-bottom:8px;}
+.empty-title{font-family:var(--display);font-weight:700;font-size:14px;color:var(--text2);margin-bottom:5px;}
+.tag{display:inline-block;background:var(--bg3);color:var(--text3);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:10px;font-family:var(--mono);}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#0d0f14;z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#13161e;border:1px solid #252836;border-radius:16px;padding:40px 36px;width:100%;max-width:380px;text-align:center;">
+    <div style="width:54px;height:54px;background:linear-gradient(135deg,#1F3864,#2E75B6);border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;font-weight:800;font-size:14px;color:#7c9fff;margin:0 auto 18px;">CLO</div>
+    <div style="font-family:Syne,sans-serif;font-weight:800;font-size:22px;color:#e8eaf2;margin-bottom:5px;">Clover Control</div>
+    <div style="font-family:monospace;font-size:11px;color:#555a72;margin-bottom:26px;">YPF Daniel Fissore · APIES 02229</div>
+    <input type="password" id="login-pass" placeholder="Contrasena"
+      style="width:100%;height:44px;padding:0 16px;border-radius:9px;border:1px solid #2e3245;background:#1a1d27;color:#e8eaf2;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box;">
+    <div id="login-error" style="font-size:11px;color:#f87171;margin-bottom:10px;min-height:16px;font-family:monospace;"></div>
+    <button id="login-btn" style="width:100%;height:44px;border-radius:9px;border:none;background:#378ADD;color:#fff;font-family:Arial,sans-serif;font-weight:700;font-size:14px;cursor:pointer;">Ingresar</button>
+    <div style="font-size:10px;color:#555a72;margin-top:18px;font-family:monospace;">Clover Control v3</div>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-dot"></div>
+    <span class="brand-name">CLOVER CONTROL</span>
+    <span class="brand-sub">YPF · Daniel Fissore</span>
+  </div>
+  <div class="topbar-r">
+    <span class="topbar-date" id="fecha-top"></span>
+    <button id="btn-cerrar" style="height:28px;padding:0 12px;border-radius:6px;border:1px solid #2e3245;background:transparent;color:#555a72;font-size:11px;cursor:pointer;">Cerrar sesion</button>
+  </div>
+</div>
+
+<div class="nav">
+  <div class="tab active" onclick="showPanel('resumen',this)">📊 Resumen</div>
+  <div class="tab" onclick="showPanel('mensual',this)">📅 Mensual</div>
+  <div class="tab" onclick="showPanel('cruce',this)">✅ Cruce Banco</div>
+  <div class="tab" onclick="showPanel('transacciones',this)">🔎 Transacciones</div>
+  <div class="tab" onclick="showPanel('banco',this)">🏦 Banco</div>
+  <div class="tab" onclick="showPanel('config',this)">⚙️ Config</div>
+</div>
+
+<div class="main">
+
+<!-- RESUMEN -->
+<div id="panel-resumen" class="panel active">
+  <div class="two-col" style="margin-bottom:12px;">
+    <div>
+      <div class="upload-zone" id="zone-clover" onclick="document.getElementById('inp-clover').click()"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="dropFile(event,'clover')">
+        <input type="file" id="inp-clover" accept=".csv,.xlsx,.xls" onchange="loadClover(this.files[0])">
+        <div class="upload-icon">📊</div>
+        <div class="upload-title">Reporte Clover</div>
+        <div class="upload-sub">CSV o Excel · Formato A (resumen) o B (pagos individuales)</div>
+        <div class="upload-status" id="status-clover"></div>
+      </div>
+      <div class="upload-zone" id="zone-banco" onclick="document.getElementById('inp-banco').click()"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="dropFile(event,'banco')">
+        <input type="file" id="inp-banco" accept=".csv,.xlsx,.xls" onchange="loadBanco(this.files[0])">
+        <div class="upload-icon">🏦</div>
+        <div class="upload-title">Extracto Banco BNA</div>
+        <div class="upload-sub">XLS o CSV de ultimos movimientos</div>
+        <div class="upload-status" id="status-banco"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:0;">
+      <div class="ct">Archivos cargados</div>
+      <div id="archivos-log" style="font-size:12px;color:var(--text3);margin-bottom:12px;">Ninguno.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn" onclick="exportarBackup()" style="color:var(--green);border-color:var(--green-b);">Exportar backup</button>
+        <button class="btn" onclick="abrirBackup()" style="color:var(--accent2);border-color:rgba(79,124,255,.3);">Importar backup</button>
+        <button class="btn" onclick="exportarExcel()" style="color:var(--amber);border-color:var(--amber-b);">Exportar Excel</button>
+        <button class="btn" onclick="limpiarTodo()" style="color:var(--red);border-color:var(--red-b);">Limpiar todo</button>
+      </div>
+    </div>
+  </div>
+  <div id="resumen-metrics" class="metrics"></div>
+  <div id="resumen-content"><div class="empty"><div class="empty-icon">📊</div><div class="empty-title">Sin datos</div><div>Carga un reporte Clover para comenzar</div></div></div>
+</div>
+
+<!-- MENSUAL -->
+<div id="panel-mensual" class="panel">
+  <div id="mensual-content"><div class="empty"><div class="empty-icon">📅</div><div class="empty-title">Sin datos</div></div></div>
+</div>
+
+<!-- CRUCE -->
+<div id="panel-cruce" class="panel">
+  <div id="cruce-content"><div class="empty"><div class="empty-icon">✅</div><div class="empty-title">Sin datos</div><div>Carga Clover y el extracto del banco</div></div></div>
+</div>
+
+<!-- TRANSACCIONES -->
+<div id="panel-transacciones" class="panel">
+  <div id="tx-content"><div class="empty"><div class="empty-icon">🔎</div><div class="empty-title">Sin datos</div><div>Carga un CSV de Pagos de Clover (Formato B)</div></div></div>
+</div>
+
+<!-- BANCO -->
+<div id="panel-banco" class="panel">
+  <div id="banco-content"><div class="empty"><div class="empty-icon">🏦</div><div class="empty-title">Sin datos</div><div>Carga el extracto del banco</div></div></div>
+</div>
+
+<!-- CONFIG -->
+<div id="panel-config" class="panel">
+  <div class="card">
+    <div class="ct">Aranceles Clover c/IVA</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:14px;">
+      <div><label class="lbl-tag">QR / Transferencia (%)</label><input type="number" id="cfg-qr" value="0.8" step="0.01" min="0" oninput="renderAll()"></div>
+      <div><label class="lbl-tag">Debito / Prepaid (%)</label><input type="number" id="cfg-deb" value="1.0" step="0.01" min="0" oninput="renderAll()"></div>
+      <div><label class="lbl-tag">Credito 1 cuota (%)</label><input type="number" id="cfg-cred" value="1.8" step="0.01" min="0" oninput="renderAll()"></div>
+      <div><label class="lbl-tag">IVA sobre arancel (%)</label><input type="number" id="cfg-iva" value="21" step="0.1" min="0" oninput="renderAll()"></div>
+    </div>
+    <button class="btn" onclick="resetConfig()">Restaurar defaults</button>
+  </div>
+  <div class="card">
+    <div class="ct">Logica de aranceles</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+      QR / Transferencia: 0.8% base + IVA 21% = <strong style="color:var(--green);">0.968% total</strong> · acredita inmediato<br>
+      Debito + Prepaid: 1.0% base + IVA 21% = <strong style="color:var(--green);">1.210% total</strong> · acredita 1 dia habil<br>
+      Credito 1 cuota: 1.8% base + IVA 21% = <strong style="color:var(--green);">2.178% total</strong> · acredita 2 dias habiles<br>
+      El banco agrupa multiples bocas bajo el mismo CUIT liquidador - el total siempre es mayor.
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ── AUTH ─────────────────────────────────────────────────────────
+const PASS_HASH = '013d7a2913436290e5463bffb2f697d79ba9389d5c6cd8ffc4576044b442edcb';
+async function hashPass(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function verificarPass(){
+  const pass = document.getElementById('login-pass').value;
+  if(!pass){ document.getElementById('login-error').textContent='Ingresa la contrasena'; return; }
+  try{
+    const h = await hashPass(pass);
+    if(h === PASS_HASH || localStorage.getItem('clover_v3_session') === PASS_HASH){
+      localStorage.setItem('clover_v3_session', PASS_HASH);
+      document.getElementById('login-screen').style.display='none';
+    } else {
+      document.getElementById('login-error').textContent='Contrasena incorrecta';
+      document.getElementById('login-pass').value='';
+    }
+  } catch(e){
+    if(pass === 'ypf2229'){
+      localStorage.setItem('clover_v3_session', PASS_HASH);
+      document.getElementById('login-screen').style.display='none';
+    } else {
+      document.getElementById('login-error').textContent='Contrasena incorrecta';
+      document.getElementById('login-pass').value='';
+    }
+  }
+}
+
+// ── STORAGE ──────────────────────────────────────────────────────
+const SK = 'clover_v3_dias', SL = 'clover_v3_log', SB = 'clover_v3_banco', STX = 'clover_v3_tx';
+let cloverDias=[], archivosLog=[], bancoMovs=[], txDetalle=[];
+
+function guardarStorage(){
+  try{
+    localStorage.setItem(SK, JSON.stringify(cloverDias));
+    localStorage.setItem(SL, JSON.stringify(archivosLog));
+    localStorage.setItem(SB, JSON.stringify(bancoMovs));
+    localStorage.setItem(STX, JSON.stringify(txDetalle.slice(-2000)));
+  }catch(e){}
+}
+function cargarStorage(){
+  try{
+    const d=localStorage.getItem(SK); if(d) cloverDias=JSON.parse(d);
+    const l=localStorage.getItem(SL); if(l) archivosLog=JSON.parse(l);
+    const b=localStorage.getItem(SB); if(b) bancoMovs=JSON.parse(b);
+    const t=localStorage.getItem(STX); if(t) txDetalle=JSON.parse(t);
+  }catch(e){}
+}
+function limpiarTodo(){
+  if(!confirm('Borrar todo el historial?')) return;
+  cloverDias=[]; archivosLog=[]; bancoMovs=[]; txDetalle=[];
+  [SK,SL,SB,STX].forEach(k=>localStorage.removeItem(k));
+  ['zone-clover','zone-banco'].forEach(id=>document.getElementById(id).classList.remove('loaded'));
+  document.getElementById('status-clover').textContent='';
+  document.getElementById('status-banco').textContent='';
+  renderAll();
+}
+
+// ── CONFIG ────────────────────────────────────────────────────────
+function getCfg(){
+  return {
+    qr:   parseFloat(document.getElementById('cfg-qr').value)||0.8,
+    deb:  parseFloat(document.getElementById('cfg-deb').value)||1.0,
+    cred: parseFloat(document.getElementById('cfg-cred').value)||1.8,
+    iva:  parseFloat(document.getElementById('cfg-iva').value)||21,
+  };
+}
+function resetConfig(){
+  document.getElementById('cfg-qr').value='0.8';
+  document.getElementById('cfg-deb').value='1.0';
+  document.getElementById('cfg-cred').value='1.8';
+  document.getElementById('cfg-iva').value='21';
+  renderAll();
+}
+function atotal(base, iva){ return (base + base*(iva||getCfg().iva)/100)/100; }
+function arMap(tipo){ const c=getCfg(); if(tipo==='qr')return c.qr; if(tipo==='debito'||tipo==='prepaid')return c.deb; if(tipo==='credito')return c.cred; return c.deb; }
+function diasHab(tipo){ if(tipo==='qr')return 0; if(tipo==='debito'||tipo==='prepaid')return 1; return 2; }
+
+// ── FERIADOS ─────────────────────────────────────────────────────
+const FERIADOS = new Set(['2026-01-01','2026-02-16','2026-02-17','2026-03-24','2026-03-27',
+  '2026-04-02','2026-05-01','2026-05-25','2026-06-15','2026-06-20',
+  '2026-07-09','2026-08-17','2026-10-12','2026-11-20','2026-12-08','2026-12-25']);
+function esHabil(d){ const w=d.getDay(); if(w===0||w===6)return false; return!FERIADOS.has(d.toISOString().split('T')[0]); }
+function addHab(isoDate,dias){
+  if(dias===0)return isoDate;
+  const d=new Date(isoDate+'T00:00:00'); let c=0;
+  while(c<dias){d.setDate(d.getDate()+1);if(esHabil(d))c++;}
+  return d.toISOString().split('T')[0];
+}
+function todayISO(){ return new Date().toISOString().split('T')[0]; }
+
+// ── UTILS ─────────────────────────────────────────────────────────
+const MESES={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+function fmt(n){ if(isNaN(n)||n===null)return'—'; return'$ '+Math.abs(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtDate(s){ if(!s)return'—'; const[y,m,d]=s.split('-'); return`${d}/${m}/${y}`; }
+function parseNum(s){
+  if(!s&&s!==0)return 0;
+  if(typeof s==='number')return s;
+  s=String(s).replace(/\$/g,'').replace(/\s/g,'').trim();
+  const nums=s.match(/\d[\d.,]*/);
+  if(!nums)return 0;
+  let n=nums[0];
+  if(n.includes(',')&&n.includes('.'))return parseFloat(n.replace(/\./g,'').replace(',','.'))||0;
+  if(n.includes(',')&&!n.includes('.'))return parseFloat(n.replace(',','.'))||0;
+  if(n.includes('.')&&!n.includes(','))return parseFloat(n)||0;
+  return parseFloat(n)||0;
+}
+function parseDate(s){
+  if(!s)return null; s=String(s).trim();
+  let m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(m)return`${'20'+m[3].slice(-2)===m[3]?'20'+m[3]:m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m)return`${m[1]}-${m[2]}-${m[3]}`;
+  m=s.match(/^(\d{2})-([A-Za-z]{3})-(\d{4})/); if(m&&MESES[m[2]])return`${m[3]}-${MESES[m[2]]}-${m[1]}`;
+  return null;
+}
+function parseFechaPago(s){
+  const m=s.match(/^(\d{2})-([A-Za-z]{3})-(\d{4})\s+(\d{2}:\d{2}\s*[AP]M)/i);
+  if(m&&MESES[m[2]])return{fecha:`${m[3]}-${MESES[m[2]]}-${m[1]}`,hora:m[4]};
+  return{fecha:parseDate(s)||'',hora:''};
+}
+function clasificar(medio,marca){
+  const n=(String(medio||'')+' '+String(marca||'')).toLowerCase();
+  if(/qr|transfer|mercado pago|modo transf|naranja|claro pay|posnet/.test(n))return'qr';
+  if(/prepag|prepaid/.test(n))return'prepaid';
+  if(/modo mastercard debit|modo mc deb|modo visa deb/.test(n))return'debito';
+  if(/deb|débito|debit/.test(n))return'debito';
+  if(/cred|crédito|visa|mastercard|amex/.test(n))return'credito';
+  return'otro';
+}
+function badgeTipo(tipo){
+  const m={qr:'ba',debito:'bg',credito:'bb',prepaid:'bgr',otro:'bgr'};
+  const l={qr:'QR',debito:'Debito',credito:'Credito',prepaid:'Prepaid',otro:'Otro'};
+  return`<span class="badge ${m[tipo]||'bgr'}">${l[tipo]||tipo}</span>`;
+}
+function detectTipoBanco(c){
+  c=(c||'').toLowerCase();
+  // Excluir cheques y otros depositos que no son Clover
+  if(c.includes('dep. ch.')||c.includes('dep ch')||c.includes('deposito cheque')||
+     c.includes('cheque')||c.includes('echeq')||c.includes('e-cheq'))return'otro';
+  if(c.includes('debin'))return'qr';
+  if(c.includes('deb 24')||c.includes('master deb')||c.includes('visa deb')||c.includes('liq master deb'))return'debito';
+  if(c.includes('mastercard')||c.includes('liq mastercard')||c.includes('visa cred'))return'credito';
+  return'otro';
+}
+
+// ── CSV PARSER ────────────────────────────────────────────────────
+function splitLine(line,sep){const res=[];let cur='';let inQ=false;for(const c of line){if(c==='"'){inQ=!inQ;}else if(c===sep&&!inQ){res.push(cur);cur='';}else cur+=c;}res.push(cur);return res;}
+function parseCSV(text){
+  const lines=text.trim().split(/\r?\n/);if(!lines.length)return[];
+  const sep=lines[0].includes(';')?';':',';
+  const headers=lines[0].split(sep).map(h=>h.trim().replace(/^["']|["']$/g,''));
+  const rows=[];
+  for(let i=1;i<lines.length;i++){
+    if(!lines[i].trim())continue;
+    const cols=splitLine(lines[i],sep);
+    const obj={};headers.forEach((h,j)=>{obj[h]=(cols[j]||'').trim().replace(/^["']|["']$/g,'');});
+    rows.push(obj);
+  }
+  return rows;
+}
+
+// ── DETECTAR FORMATO ──────────────────────────────────────────────
+function detectFormato(rows){
+  if(!rows.length)return'desconocido';
+  const keys=Object.keys(rows[0]).join(' ').toLowerCase();
+  if(keys.includes('fecha del pago')||keys.includes('resultado')||keys.includes('id del pago'))return'B';
+  if(keys.includes('medio de pago')||keys.includes('total de ventas')||keys.includes('importe recolect'))return'A';
+  return'desconocido';
+}
+
+// ── DROP / LOAD ───────────────────────────────────────────────────
+function dropFile(e,target){e.preventDefault();document.getElementById('zone-'+target).classList.remove('drag');const f=e.dataTransfer.files[0];if(!f)return;if(target==='clover')loadClover(f);else loadBanco(f);}
+
+function loadClover(file){
+  if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='xlsx'||ext==='xls'){
+    const reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const json=XLSX.utils.sheet_to_json(ws,{defval:'',raw:false});
+        const rows=json.map(r=>{const o={};Object.keys(r).forEach(k=>o[k.toLowerCase().trim()]=String(r[k]||'').trim());return o;});
+        const fmt=detectFormato(rows);
+        if(fmt==='B')procesarFormatoB(rows,file.name);
+        else if(fmt==='A')procesarFormatoA(rows,file.name);
+        else alert('Formato no reconocido.');
+      }catch(err){alert('Error Excel Clover: '+err.message);}
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    const reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        const rows=parseCSV(e.target.result);
+        const fmt=detectFormato(rows);
+        if(fmt==='B')procesarFormatoB(rows,file.name);
+        else if(fmt==='A')procesarFormatoA(rows,file.name);
+        else alert('Formato no reconocido. Debe ser reporte Clover.');
+      }catch(err){alert('Error CSV: '+err.message);}
+    };
+    reader.readAsText(file,'UTF-8');
+  }
+}
+
+// ── FORMATO A ────────────────────────────────────────────────────
+function procesarFormatoA(rows,filename){
+  let fechaVenta=null;
+  const m=filename.match(/(\d{2})_(\d{2})_(\d{4})/);
+  if(m)fechaVenta=`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  if(!fechaVenta){const inp=prompt('Ingresa la fecha de venta (DD/MM/AAAA):');fechaVenta=parseDate(inp);}
+  if(!fechaVenta){alert('Fecha invalida.');return;}
+  const keys=Object.keys(rows[0]);
+  function findCol(...cands){for(const c of cands){const k=keys.find(k=>k.toLowerCase().includes(c));if(k)return k;}return null;}
+  const cMedio=findCol('medio','nombre');
+  const cBruto=findCol('total','bruto','venta','importe','recolect');
+  if(!cMedio||!cBruto){alert('No pude identificar las columnas del Formato A.');return;}
+  const tarjetas=[];
+  rows.forEach(r=>{
+    const medio=r[cMedio]||'';
+    const bruto=parseNum(r[cBruto]);
+    if(bruto<=0)return;
+    const tipo=clasificar(medio,'');
+    if(tipo==='otro')return;
+    tarjetas.push({nombre:medio,tipo,bruto});
+  });
+  if(!tarjetas.length){alert('Sin datos validos en el archivo.');return;}
+  guardarDia(fechaVenta,tarjetas,'A',filename);
+  archivosLog.push({filename,formato:'A',fecha:fmtDate(fechaVenta),txs:tarjetas.length});
+  document.getElementById('zone-clover').classList.add('loaded');
+  document.getElementById('status-clover').textContent='OK: '+filename+' ('+tarjetas.length+' medios)';
+  guardarStorage(); renderAll();
+}
+
+// ── FORMATO B ────────────────────────────────────────────────────
+function procesarFormatoB(rows,filename){
+  const porFecha={};const nuevasTx=[];
+  rows.forEach(r=>{
+    const keys={};Object.keys(r).forEach(k=>keys[k.toLowerCase().trim()]=r[k]);
+    const res=(keys['resultado']||'').trim();
+    if(res!=='SUCCESS'&&res!=='success')return;
+    const fp=parseFechaPago(keys['fecha del pago']||'');
+    const fecha=fp.fecha; if(!fecha)return;
+    const importe=parseNum(keys['importe']||0); if(importe<=0)return;
+    const medio=keys['medio de pago']||'';
+    const marca=keys['marca de la tarjeta']||'';
+    const tipo=clasificar(medio,marca);
+    if(!porFecha[fecha])porFecha[fecha]=[];
+    porFecha[fecha].push({nombre:marca||medio,tipo,bruto:importe});
+    nuevasTx.push({fecha,hora:fp.hora,tipo,nombre:marca||medio,bruto:importe,
+      resultado:res,auth:keys['codigo de autorizacion de la tarjeta']||keys['codigo de autorizacion']||'',
+      idPago:keys['id del pago']||'',nota:keys['nota']||'',tarjeta:keys['numero de tarjeta']||''});
+  });
+  Object.keys(porFecha).forEach(fecha=>{guardarDia(fecha,porFecha[fecha],'B',filename);});
+  nuevasTx.forEach(tx=>{if(!txDetalle.find(t=>t.idPago&&t.idPago===tx.idPago&&tx.idPago))txDetalle.push(tx);});
+  const totalDias=Object.keys(porFecha).length;
+  const totalTx=nuevasTx.length;
+  archivosLog.push({filename,formato:'B',fecha:totalDias+' dias',txs:totalTx});
+  document.getElementById('zone-clover').classList.add('loaded');
+  document.getElementById('status-clover').textContent='OK: '+filename+' ('+totalTx+' txs en '+totalDias+' dias)';
+  guardarStorage(); renderAll();
+}
+
+function guardarDia(fecha,tarjetas,fmtTipo,filename){
+  const idx=cloverDias.findIndex(d=>d.fecha===fecha&&d.fuente===filename);
+  if(idx>=0)cloverDias[idx]={fecha,tarjetas,fuente:filename,fmtTipo};
+  else cloverDias.push({fecha,tarjetas,fuente:filename,fmtTipo});
+  cloverDias.sort((a,b)=>a.fecha.localeCompare(b.fecha));
+}
+
+// ── BANCO ────────────────────────────────────────────────────────
+function loadBanco(file){
+  if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='xlsx'||ext==='xls'){
+    const reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const arr=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        let headerRow=-1;
+        for(let i=0;i<arr.length;i++){if(String(arr[i][0]||'').toLowerCase().trim()==='fecha'){headerRow=i;break;}}
+        if(headerRow<0){alert('No encontre la fila de headers del banco.');return;}
+        const headers=arr[headerRow].map(h=>String(h||'').toLowerCase().trim());
+        const rows=arr.slice(headerRow+1).filter(r=>r[0]).map(r=>{
+          const o={};headers.forEach((h,i)=>o[h]=r[i]!==undefined?r[i]:'');return o;
+        });
+        procesarBanco(rows);
+      }catch(err){alert('Error XLS banco: '+err.message);}
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    const reader=new FileReader();
+    reader.onload=function(e){
+      try{
+        const text=e.target.result;
+        const lines=text.split(/\r?\n/);
+        let startLine=0;
+        for(let i=0;i<lines.length;i++){if(lines[i].toLowerCase().includes('fecha')&&lines[i].toLowerCase().includes('concepto')){startLine=i;break;}}
+        procesarBanco(parseCSV(lines.slice(startLine).join('\n')));
+      }catch(err){alert('Error CSV banco: '+err.message);}
+    };
+    reader.readAsText(file,'latin1');
+  }
+}
+
+function procesarBanco(rows){
+  if(!rows.length){alert('Sin datos en el extracto.');return;}
+  const r0=rows[0];const keys=Object.keys(r0);
+  function findCol(...c){for(const x of c){const k=keys.find(k=>k.toLowerCase().includes(x.toLowerCase()));if(k!==undefined)return k;}return null;}
+  const cF=findCol('fecha');const cC=findCol('concepto','descripci','detalle');const cI=findCol('importe','credito','monto','haber');
+  const nuevos=[];
+  for(const row of rows){
+    const fecha=parseDate(String(row[cF]||row[keys[0]]||''));if(!fecha)continue;
+    const concepto=(String(row[cC]||row[keys[2]]||'')).trim();
+    const importe=parseNum(row[cI]!==undefined?row[cI]:row[keys[3]]||0);
+    if(importe<=0)continue;
+    const tipo=detectTipoBanco(concepto);
+    if(tipo==='otro')continue;
+    nuevos.push({fecha,concepto,importe,tipo,comp:String(row['comprobante']||row[keys[1]]||'').trim()});
+  }
+  if(!nuevos.length){alert('Sin movimientos positivos reconocidos (DEBIN/Debito/Credito) en el extracto.');return;}
+  // Fusionar con existentes
+  nuevos.forEach(m=>{if(!bancoMovs.find(b=>b.fecha===m.fecha&&b.comp===m.comp&&b.comp))bancoMovs.push(m);else if(!m.comp)bancoMovs.push(m);});
+  const fechas=[...new Set(nuevos.map(m=>m.fecha))].sort();
+  document.getElementById('zone-banco').classList.add('loaded');
+  document.getElementById('status-banco').textContent='OK: '+nuevos.length+' movimientos ('+fmtDate(fechas[0])+' - '+fmtDate(fechas[fechas.length-1])+')';
+  guardarStorage(); renderAll();
+}
+
+// ── RENDER ALL ────────────────────────────────────────────────────
+function renderAll(){
+  renderArchivos();
+  renderResumen();
+  renderMensual();
+  renderCruce();
+  renderTransacciones();
+  renderBanco();
+}
+
+// ── ARCHIVOS LOG ──────────────────────────────────────────────────
+function renderArchivos(){
+  const el=document.getElementById('archivos-log');
+  if(!archivosLog.length){el.textContent='Ninguno.';return;}
+  el.innerHTML=archivosLog.map(a=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px;">
+    <span style="color:var(--text2);">${a.filename.split('/').pop().substring(0,40)}</span>
+    <span class="tag">Fmt ${a.formato} · ${a.txs} txs</span>
+  </div>`).join('');
+}
+
+// ── RENDER RESUMEN ────────────────────────────────────────────────
+function renderResumen(){
+  if(!cloverDias.length){
+    document.getElementById('resumen-metrics').innerHTML='';
+    document.getElementById('resumen-content').innerHTML='<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">Sin datos</div></div>';
+    return;
+  }
+  const cfg=getCfg();
+  let totQR=0,totDeb=0,totPrep=0,totCred=0,totBruto=0;
+  cloverDias.forEach(d=>d.tarjetas.forEach(t=>{
+    if(t.tipo==='qr')totQR+=t.bruto;
+    else if(t.tipo==='debito')totDeb+=t.bruto;
+    else if(t.tipo==='prepaid')totPrep+=t.bruto;
+    else if(t.tipo==='credito')totCred+=t.bruto;
+    totBruto+=t.bruto;
+  }));
+  const netoQR  =totQR  *(1-atotal(cfg.qr,cfg.iva));
+  const netoDeb =(totDeb+totPrep)*(1-atotal(cfg.deb,cfg.iva));
+  const netoCred=totCred*(1-atotal(cfg.cred,cfg.iva));
+  const totNeto =netoQR+netoDeb+netoCred;
+  const comTotal=totBruto-totNeto;
+  const fechas=cloverDias.map(d=>d.fecha).sort();
+
+  document.getElementById('resumen-metrics').innerHTML=`
+    <div class="metric"><div class="lbl">Total bruto</div><div class="val">${fmt(totBruto)}</div><div class="s">${cloverDias.length} dias · ${archivosLog.length} archivos</div></div>
+    <div class="metric amber"><div class="lbl">Comisiones c/IVA</div><div class="val">${fmt(comTotal)}</div><div class="s">QR+Deb+Cred</div></div>
+    <div class="metric neto"><div class="lbl">Total neto estimado</div><div class="val">${fmt(totNeto)}</div><div class="s">a acreditar en banco</div></div>
+    <div class="metric green"><div class="lbl">QR / Transf.</div><div class="val">${fmt(totQR)}</div><div class="s">neto ${fmt(netoQR)}</div></div>
+    <div class="metric blue"><div class="lbl">Debito + Prepaid</div><div class="val">${fmt(totDeb+totPrep)}</div><div class="s">neto ${fmt(netoDeb)}</div></div>
+    <div class="metric blue"><div class="lbl">Credito</div><div class="val">${fmt(totCred)}</div><div class="s">neto ${fmt(netoCred)}</div></div>`;
+
+  // Tabla por dia
+  const maxBar=Math.max(...cloverDias.map(d=>d.tarjetas.reduce((s,t)=>s+t.bruto,0)))||1;
+  let rows='';
+  cloverDias.forEach(d=>{
+    let dQR=0,dDeb=0,dCred=0,dPrep=0;
+    d.tarjetas.forEach(t=>{
+      if(t.tipo==='qr')dQR+=t.bruto;
+      else if(t.tipo==='debito')dDeb+=t.bruto;
+      else if(t.tipo==='prepaid')dPrep+=t.bruto;
+      else if(t.tipo==='credito')dCred+=t.bruto;
+    });
+    const bruto=dQR+dDeb+dPrep+dCred;
+    const neto=dQR*(1-atotal(cfg.qr,cfg.iva))+(dDeb+dPrep)*(1-atotal(cfg.deb,cfg.iva))+dCred*(1-atotal(cfg.cred,cfg.iva));
+    const w=(bruto/maxBar*100).toFixed(0);
+    rows+=`<tr>
+      <td class="td-b td-m">${fmtDate(d.fecha)}</td>
+      <td><div class="bar-outer" style="height:12px;"><div class="bar-inner" style="width:${w}%;background:var(--accent);"></div></div></td>
+      <td class="r td-m">${dQR>0?fmt(dQR):'—'}</td>
+      <td class="r td-m">${(dDeb+dPrep)>0?fmt(dDeb+dPrep):'—'}</td>
+      <td class="r td-m">${dCred>0?fmt(dCred):'—'}</td>
+      <td class="r td-m">${fmt(bruto)}</td>
+      <td class="r td-g">${fmt(neto)}</td>
+    </tr>`;
+  });
+
+  document.getElementById('resumen-content').innerHTML=`
+    <div class="card">
+      <div class="ct">Detalle por dia — ${fmtDate(fechas[0])} al ${fmtDate(fechas[fechas.length-1])}</div>
+      <div class="tw"><table>
+        <thead><tr><th>Fecha</th><th style="width:120px;">Relativo</th><th class="r">QR/Transf.</th><th class="r">Debito+Prep.</th><th class="r">Credito</th><th class="r">Bruto</th><th class="r">Neto est.</th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr class="tfoot-neto"><td colspan="5"><strong>TOTAL</strong></td><td class="r"><strong>${fmt(totBruto)}</strong></td><td class="r td-g"><strong>${fmt(totNeto)}</strong></td></tr></tfoot>
+      </table></div>
+    </div>`;
+}
+
+// ── RENDER MENSUAL ────────────────────────────────────────────────
+function renderMensual(){
+  if(!cloverDias.length){
+    document.getElementById('mensual-content').innerHTML='<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">Sin datos</div></div>';
+    return;
+  }
+  const cfg=getCfg();
+  // Agrupar por mes
+  const meses={};
+  cloverDias.forEach(d=>{
+    const mes=d.fecha.substring(0,7); // YYYY-MM
+    if(!meses[mes])meses[mes]={qr:0,deb:0,prep:0,cred:0,dias:0};
+    meses[mes].dias++;
+    d.tarjetas.forEach(t=>{
+      if(t.tipo==='qr')meses[mes].qr+=t.bruto;
+      else if(t.tipo==='debito')meses[mes].deb+=t.bruto;
+      else if(t.tipo==='prepaid')meses[mes].prep+=t.bruto;
+      else if(t.tipo==='credito')meses[mes].cred+=t.bruto;
+    });
+  });
+
+  let tablaRows='';let totBrutoAcum=0;let totNetoAcum=0;
+  Object.keys(meses).sort().forEach(mes=>{
+    const g=meses[mes];
+    const bruto=g.qr+g.deb+g.prep+g.cred;
+    const neto=g.qr*(1-atotal(cfg.qr,cfg.iva))+(g.deb+g.prep)*(1-atotal(cfg.deb,cfg.iva))+g.cred*(1-atotal(cfg.cred,cfg.iva));
+    const com=bruto-neto;
+    totBrutoAcum+=bruto;totNetoAcum+=neto;
+    const [y,m]=mes.split('-');
+    const mesNombre=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][parseInt(m)-1]+' '+y;
+    tablaRows+=`<tr>
+      <td class="td-b">${mesNombre}</td>
+      <td class="c td-s">${g.dias}</td>
+      <td class="r td-m">${fmt(g.qr)}</td>
+      <td class="r td-m">${fmt(g.deb+g.prep)}</td>
+      <td class="r td-m">${fmt(g.cred)}</td>
+      <td class="r td-m">${fmt(bruto)}</td>
+      <td class="r td-a">-${fmt(com)}</td>
+      <td class="r td-g">${fmt(neto)}</td>
+    </tr>`;
+  });
+
+  // Tabla por dia con acreditaciones esperadas
+  let acredRows='';
+  cloverDias.forEach(d=>{
+    const gruposAcred={};
+    d.tarjetas.forEach(t=>{
+      const fa=addHab(d.fecha,diasHab(t.tipo));
+      if(!gruposAcred[fa])gruposAcred[fa]={bruto:0,com:0,tipos:new Set()};
+      const at=atotal(arMap(t.tipo),cfg.iva);
+      gruposAcred[fa].bruto+=t.bruto;
+      gruposAcred[fa].com+=t.bruto*at;
+      gruposAcred[fa].tipos.add(t.tipo);
+    });
+    Object.keys(gruposAcred).sort().forEach(fa=>{
+      const g=gruposAcred[fa];
+      const neto=g.bruto-g.com;
+      const tipos=[...g.tipos];
+      const tipoLabel=tipos.includes('qr')&&tipos.length===1?'QR':tipos.includes('credito')&&tipos.length===1?'Credito':'Debito/Mix';
+      const isFut=fa>todayISO();
+      acredRows+=`<tr>
+        <td class="td-m">${fmtDate(d.fecha)}</td>
+        <td class="td-s">${tipoLabel}</td>
+        <td class="td-m" style="color:var(--accent2);">${fmtDate(fa)}</td>
+        <td class="r td-m">${fmt(g.bruto)}</td>
+        <td class="r td-a">-${fmt(g.com)}</td>
+        <td class="r td-g">${fmt(neto)}</td>
+        <td class="c"><span class="badge ${isFut?'ba':'bg'}">${isFut?'Pendiente':'Acreditado'}</span></td>
+      </tr>`;
+    });
+  });
+
+  document.getElementById('mensual-content').innerHTML=`
+    <div class="card">
+      <div class="ct">Resumen por mes</div>
+      <div class="tw"><table>
+        <thead><tr><th>Mes</th><th class="c">Dias</th><th class="r">QR/Transf.</th><th class="r">Debito+Prep.</th><th class="r">Credito</th><th class="r">Bruto total</th><th class="r">Comisiones</th><th class="r">Neto total</th></tr></thead>
+        <tbody>${tablaRows}</tbody>
+        <tfoot><tr class="tfoot-neto"><td colspan="5"><strong>ACUMULADO</strong></td><td class="r"><strong>${fmt(totBrutoAcum)}</strong></td><td class="r td-a">-<strong>${fmt(totBrutoAcum-totNetoAcum)}</strong></td><td class="r td-g"><strong>${fmt(totNetoAcum)}</strong></td></tr></tfoot>
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="ct">Calendario de acreditaciones esperadas</div>
+      <div class="tw"><table>
+        <thead><tr><th>Fecha venta</th><th>Tipo</th><th>Acredita en banco</th><th class="r">Bruto</th><th class="r">Comision</th><th class="r">Neto esperado</th><th class="c">Estado</th></tr></thead>
+        <tbody>${acredRows}</tbody>
+      </table></div>
+    </div>`;
+}
+
+// ── RENDER CRUCE ──────────────────────────────────────────────────
+function renderCruce(){
+  if(!cloverDias.length||!bancoMovs.length){
+    document.getElementById('cruce-content').innerHTML=`<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">Carga Clover y el extracto del banco</div></div>`;
+    return;
+  }
+  const cfg=getCfg();
+  // Agrupar banco por fecha y tipo
+  const banco={};
+  bancoMovs.forEach(m=>{
+    if(!banco[m.fecha])banco[m.fecha]={qr:0,debito:0,credito:0,total:0};
+    banco[m.fecha][m.tipo]=(banco[m.fecha][m.tipo]||0)+m.importe;
+    banco[m.fecha].total+=m.importe;
+  });
+
+  // Para cada dia Clover calcular acreditaciones y cruzar
+  let rows='';let totalEsp=0;let totalBanco=0;let ok=0;let warn=0;let err=0;
+
+  // Agrupar por fecha de acreditacion
+  const acredMap={};
+  cloverDias.forEach(d=>{
+    d.tarjetas.forEach(t=>{
+      const fa=addHab(d.fecha,diasHab(t.tipo));
+      const key=`${d.fecha}|${fa}|${t.tipo==='qr'?'qr':t.tipo==='credito'?'credito':'debito'}`;
+      if(!acredMap[key])acredMap[key]={fechaVenta:d.fecha,fechaAcred:fa,tipoLabel:t.tipo==='qr'?'QR':t.tipo==='credito'?'Credito':'Debito',bruto:0,com:0};
+      const at=atotal(arMap(t.tipo),cfg.iva);
+      acredMap[key].bruto+=t.bruto;
+      acredMap[key].com+=t.bruto*at;
+    });
+  });
+
+  Object.values(acredMap).sort((a,b)=>a.fechaAcred.localeCompare(b.fechaAcred)||a.fechaVenta.localeCompare(b.fechaVenta)).forEach(g=>{
+    const neto=g.bruto-g.com;
+    const fa=g.fechaAcred;
+    const isFut=fa>todayISO();
+    const bancoFecha=banco[fa]||{};
+    const bancoPorTipo=g.tipoLabel==='QR'?bancoFecha.qr||0:g.tipoLabel==='Credito'?bancoFecha.credito||0:bancoFecha.debito||0;
+    const bancoTotal=bancoFecha.total||0;
+    const encontrado=bancoPorTipo>0||bancoTotal>0;
+    const calza=bancoPorTipo>=neto;
+    totalEsp+=neto;
+    if(encontrado)totalBanco+=bancoPorTipo;
+
+    let cls,estado,badgeCls;
+    if(isFut){cls='cruce-row-fut';estado='Pendiente';badgeCls='ba';}
+    else if(!encontrado){cls='cruce-row-warn';estado='Sin movimiento';badgeCls='bgr';warn++;}
+    else if(calza){cls='cruce-row-ok';estado='CALZA';badgeCls='bg';ok++;}
+    else{cls='cruce-row-warn';estado='Revisar';badgeCls='ba';warn++;}
+
+    const pct=bancoPorTipo>0?(neto/bancoPorTipo*100).toFixed(0)+'%':'—';
+    rows+=`<tr class="${cls}">
+      <td class="td-m">${fmtDate(g.fechaVenta)}</td>
+      <td>${badgeTipo(g.tipoLabel.toLowerCase())}</td>
+      <td class="td-m" style="color:var(--accent2);">${fmtDate(fa)}</td>
+      <td class="r td-m">${fmt(g.bruto)}</td>
+      <td class="r td-a">-${fmt(g.com)}</td>
+      <td class="r td-g">${fmt(neto)}</td>
+      <td class="r td-m">${encontrado?fmt(bancoPorTipo):'—'}</td>
+      <td class="r td-s">${pct}</td>
+      <td class="r td-m" style="color:${calza&&encontrado?'var(--green)':isFut?'var(--amber)':'var(--text3)'};">${encontrado?fmt(bancoPorTipo-neto):'—'}</td>
+      <td class="c"><span class="badge ${badgeCls}">${estado}</span></td>
+    </tr>`;
+  });
+
+  const veredicto=ok>0&&warn===0&&err===0
+    ?`<div class="veredicto ok">Todo calza - acreditaciones verificadas correctamente</div>`
+    :warn>0
+    ?`<div class="veredicto warn">${warn} item(s) para revisar - puede ser que el extracto no cubra todas las fechas</div>`
+    :`<div class="veredicto warn">Carga el extracto del banco para verificar</div>`;
+
+  // Resumen banco vs clover
+  const fechasBanco=[...new Set(bancoMovs.map(m=>m.fecha))].sort();
+  const totalBancoReal=bancoMovs.reduce((s,m)=>s+m.importe,0);
+
+  document.getElementById('cruce-content').innerHTML=`
+    ${veredicto}
+    <div class="three-col" style="margin-bottom:14px;">
+      <div class="metric neto"><div class="lbl">Neto Clover esperado</div><div class="val">${fmt(totalEsp)}</div><div class="s">suma de todos los dias</div></div>
+      <div class="metric blue"><div class="lbl">Total banco (tu tipo)</div><div class="val">${fmt(totalBanco)}</div><div class="s">DEBIN+Deb+Cred de tu CUIT</div></div>
+      <div class="metric"><div class="lbl">Total banco general</div><div class="val">${fmt(totalBancoReal)}</div><div class="s">incluye otras bocas del CUIT</div></div>
+    </div>
+    <div class="card">
+      <div class="ct">Cruce detallado venta vs acreditacion</div>
+      <div class="tw"><table>
+        <thead><tr>
+          <th>Fecha venta</th><th>Tipo</th><th>Acredita</th>
+          <th class="r">Bruto</th><th class="r">Comision</th><th class="r">Neto esperado</th>
+          <th class="r">Banco acredito</th><th class="r">Tu %</th><th class="r">Diferencia</th><th class="c">Estado</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="ct">Nota sobre el cruce</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+        El banco BNA liquida bajo un <strong style="color:var(--text);">CUIT liquidador</strong> que agrupa multiples bocas YPF. 
+        Por eso el total del banco siempre es mayor al neto de tu boca individual.<br>
+        La columna <strong style="color:var(--text);">"Tu %"</strong> indica que porcentaje del total del banco corresponde a tu neto estimado.
+        Si este porcentaje es estable entre dias, el cruce es correcto.<br>
+        Si el banco acredito <strong style="color:var(--green);">mas que tu neto</strong> = normal (otras bocas).<br>
+        Si el banco acredito <strong style="color:var(--red);">menos que tu neto</strong> = revisar con Clover.
+      </div>
+    </div>`;
+}
+
+// ── RENDER TRANSACCIONES ──────────────────────────────────────────
+function renderTransacciones(){
+  const el=document.getElementById('tx-content');
+  if(!txDetalle.length){el.innerHTML='<div class="empty"><div class="empty-icon">🔎</div><div class="empty-title">Sin transacciones</div><div>Carga un Formato B de Clover</div></div>';return;}
+  const q=(document.getElementById('tx-q')||{value:''}).value.toLowerCase();
+  const filtTipo=(document.getElementById('tx-tipo')||{value:''}).value;
+  const filtFecha=(document.getElementById('tx-fecha')||{value:''}).value;
+  const fechas=[...new Set(txDetalle.map(t=>t.fecha))].sort();
+  let lista=txDetalle.filter(t=>{
+    if(filtTipo&&t.tipo!==filtTipo)return false;
+    if(filtFecha&&t.fecha!==filtFecha)return false;
+    if(q&&![t.nombre,t.auth,t.idPago,t.nota,t.tarjeta,String(t.bruto)].join(' ').toLowerCase().includes(q))return false;
+    return true;
+  });
+  const filas=lista.slice(0,500).map(t=>`<tr>
+    <td class="td-m">${fmtDate(t.fecha)}</td>
+    <td class="td-s">${t.hora||'—'}</td>
+    <td>${badgeTipo(t.tipo)}</td>
+    <td class="td-b" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.nombre}</td>
+    <td class="r td-g">${fmt(t.bruto)}</td>
+    <td class="td-s">${t.auth||'—'}</td>
+    <td class="td-s" style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.nota||'—'}</td>
+  </tr>`).join('');
+  el.innerHTML=`
+    <div class="search-row">
+      <input type="text" id="tx-q" placeholder="Buscar importe, tarjeta, auth, nota..." oninput="renderTransacciones()">
+      <select id="tx-tipo" onchange="renderTransacciones()" style="width:130px;">
+        <option value="">Todos los tipos</option>
+        <option value="qr">QR</option><option value="debito">Debito</option>
+        <option value="credito">Credito</option><option value="prepaid">Prepaid</option>
+      </select>
+      <select id="tx-fecha" onchange="renderTransacciones()" style="width:140px;">
+        <option value="">Todas las fechas</option>
+        ${fechas.map(f=>`<option value="${f}">${fmtDate(f)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="card">
+      <div class="ct">${lista.length} transacciones</div>
+      <div class="tw"><table>
+        <thead><tr><th>Fecha</th><th>Hora</th><th>Tipo</th><th>Tarjeta/Medio</th><th class="r">Importe</th><th>Auth</th><th>Nota</th></tr></thead>
+        <tbody>${filas||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px;">Sin resultados</td></tr>'}</tbody>
+      </table></div>
+      ${lista.length>500?`<div style="text-align:center;color:var(--text3);font-size:11px;padding:10px;">Mostrando 500 de ${lista.length}</div>`:''}
+    </div>`;
+}
+
+// ── RENDER BANCO ──────────────────────────────────────────────────
+function renderBanco(){
+  const el=document.getElementById('banco-content');
+  if(!bancoMovs.length){el.innerHTML='<div class="empty"><div class="empty-icon">🏦</div><div class="empty-title">Sin datos</div><div>Carga el extracto del banco</div></div>';return;}
+  const q=(document.getElementById('banco-q')||{value:''}).value.toLowerCase();
+  const filtFecha=(document.getElementById('banco-fecha')||{value:''}).value;
+  const fechas=[...new Set(bancoMovs.map(m=>m.fecha))].sort();
+  let lista=bancoMovs.filter(m=>{
+    if(filtFecha&&m.fecha!==filtFecha)return false;
+    if(q&&![m.concepto,String(m.importe),m.comp].join(' ').toLowerCase().includes(q))return false;
+    return true;
+  });
+  const totalFilt=lista.reduce((s,m)=>s+m.importe,0);
+  const filas=lista.slice(0,500).map(m=>`<tr>
+    <td class="td-m">${fmtDate(m.fecha)}</td>
+    <td class="td-s">${m.comp||'—'}</td>
+    <td class="td-b" style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.concepto}</td>
+    <td>${m.tipo==='qr'?'<span class="badge ba">QR/DEBIN</span>':m.tipo==='debito'?'<span class="badge bg">Debito</span>':'<span class="badge bb">Credito</span>'}</td>
+    <td class="r td-g">${fmt(m.importe)}</td>
+  </tr>`).join('');
+  el.innerHTML=`
+    <div class="search-row">
+      <input type="text" id="banco-q" placeholder="Buscar concepto, importe..." oninput="renderBanco()">
+      <select id="banco-fecha" onchange="renderBanco()" style="width:140px;">
+        <option value="">Todas las fechas</option>
+        ${fechas.map(f=>`<option value="${f}">${fmtDate(f)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="card">
+      <div class="ct">${lista.length} movimientos · Total: ${fmt(totalFilt)}</div>
+      <div class="tw"><table>
+        <thead><tr><th>Fecha</th><th>Comp.</th><th>Concepto</th><th>Tipo</th><th class="r">Importe</th></tr></thead>
+        <tbody>${filas}</tbody>
+        <tfoot><tr class="tfoot"><td colspan="4"><strong>TOTAL</strong></td><td class="r td-g"><strong>${fmt(totalFilt)}</strong></td></tr></tfoot>
+      </table></div>
+    </div>`;
+}
+
+// ── BACKUP ────────────────────────────────────────────────────────
+function exportarBackup(){
+  if(!cloverDias.length){alert('Sin datos para exportar.');return;}
+  const fechas=cloverDias.map(d=>d.fecha).sort();
+  const backup={version:3,exportado:new Date().toLocaleString('es-AR'),estacion:'YPF Daniel Fissore',
+    periodo:{desde:fmtDate(fechas[0]),hasta:fmtDate(fechas[fechas.length-1])},
+    cloverDias,archivosLog,bancoMovs,txDetalle:txDetalle.slice(-1000)};
+  const blob=new Blob([JSON.stringify(backup)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='Clover_Backup_'+new Date().toLocaleDateString('es-AR').replace(/\//g,'-')+'.json';
+  a.click();URL.revokeObjectURL(url);
+}
+
+function abrirBackup(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='.json';inp.style.display='none';
+  let proc=false;
+  inp.onchange=function(){
+    if(proc)return;proc=true;
+    if(this.files&&this.files[0])importarBackup(this.files[0]);
+    setTimeout(()=>{try{document.body.removeChild(inp);}catch(e){}},500);
+  };
+  function onFocus(){setTimeout(()=>{if(!proc){proc=true;try{document.body.removeChild(inp);}catch(e){}};window.removeEventListener('focus',onFocus);},300);}
+  window.addEventListener('focus',onFocus);
+  document.body.appendChild(inp);inp.click();
+}
+
+function importarBackup(file){
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const backup=JSON.parse(e.target.result);
+      if(!backup.cloverDias){alert('Archivo invalido.');return;}
+      if(cloverDias.length>0){
+        const opc=confirm('Ya hay '+cloverDias.length+' dias cargados.\nOK = Reemplazar\nCancelar = Fusionar');
+        if(opc){cloverDias=backup.cloverDias||[];archivosLog=backup.archivosLog||[];bancoMovs=backup.bancoMovs||[];txDetalle=backup.txDetalle||[];}
+        else{cloverDias=[...cloverDias,...(backup.cloverDias||[])];archivosLog=[...archivosLog,...(backup.archivosLog||[])];bancoMovs=[...bancoMovs,...(backup.bancoMovs||[])];txDetalle=[...txDetalle,...(backup.txDetalle||[])];}
+      } else {
+        cloverDias=backup.cloverDias||[];archivosLog=backup.archivosLog||[];bancoMovs=backup.bancoMovs||[];txDetalle=backup.txDetalle||[];
+      }
+      guardarStorage();renderAll();
+      document.getElementById('zone-clover').classList.add('loaded');
+      document.getElementById('status-clover').textContent='Backup cargado: '+cloverDias.length+' dias';
+      if(bancoMovs.length){document.getElementById('zone-banco').classList.add('loaded');document.getElementById('status-banco').textContent='Banco: '+bancoMovs.length+' movimientos';}
+    }catch(err){alert('Error: '+err.message);}
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+// ── EXPORTAR EXCEL ────────────────────────────────────────────────
+function exportarExcel(){
+  if(!cloverDias.length){alert('Sin datos para exportar.');return;}
+  if(typeof XLSX==='undefined'){alert('Sin libreria Excel.');return;}
+  const cfg=getCfg();
+  const wb=XLSX.utils.book_new();
+  const fechas=cloverDias.map(d=>d.fecha).sort();
+
+  // HOJA 1: Resumen ejecutivo
+  let totQR=0,totDeb=0,totPrep=0,totCred=0;
+  cloverDias.forEach(d=>d.tarjetas.forEach(t=>{
+    if(t.tipo==='qr')totQR+=t.bruto;
+    else if(t.tipo==='debito')totDeb+=t.bruto;
+    else if(t.tipo==='prepaid')totPrep+=t.bruto;
+    else if(t.tipo==='credito')totCred+=t.bruto;
+  }));
+  const atQR=atotal(cfg.qr,cfg.iva),atDeb=atotal(cfg.deb,cfg.iva),atCred=atotal(cfg.cred,cfg.iva);
+  const netoQR=totQR*(1-atQR),netoDeb=(totDeb+totPrep)*(1-atDeb),netoCred=totCred*(1-atCred);
+  const totBruto=totQR+totDeb+totPrep+totCred,totNeto=netoQR+netoDeb+netoCred;
+
+  const ws1=XLSX.utils.aoa_to_sheet([
+    ['RESUMEN EJECUTIVO - CLOVER - YPF DANIEL FISSORE'],
+    ['Periodo: '+fmtDate(fechas[0])+' al '+fmtDate(fechas[fechas.length-1])],
+    ['Exportado: '+new Date().toLocaleString('es-AR')],
+    [],
+    ['Tipo','Bruto','Arancel base','IVA sobre arancel','Arancel c/IVA','Neto estimado','Dias acreditacion'],
+    ['QR / Transferencia',totQR,cfg.qr+'%',cfg.iva+'%',(atQR*100).toFixed(3)+'%',netoQR,'Inmediato'],
+    ['Debito + Prepaid',totDeb+totPrep,cfg.deb+'%',cfg.iva+'%',(atDeb*100).toFixed(3)+'%',netoDeb,'1 dia habil'],
+    ['Credito 1 cuota',totCred,cfg.cred+'%',cfg.iva+'%',(atCred*100).toFixed(3)+'%',netoCred,'2 dias habiles'],
+    ['TOTAL',totBruto,'','','',totNeto,''],
+    [],
+    ['Comisiones totales',totBruto-totNeto],
+  ]);
+  ws1['!cols']=[{wch:22},{wch:16},{wch:14},{wch:16},{wch:14},{wch:16},{wch:18}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Resumen Ejecutivo');
+
+  // HOJA 2: Por dia
+  const diaData=[['Fecha','QR Bruto','QR Neto','Debito+Prep Bruto','Debito+Prep Neto','Credito Bruto','Credito Neto','Total Bruto','Total Neto']];
+  cloverDias.forEach(d=>{
+    let dQR=0,dDeb=0,dPrep=0,dCred=0;
+    d.tarjetas.forEach(t=>{
+      if(t.tipo==='qr')dQR+=t.bruto;
+      else if(t.tipo==='debito')dDeb+=t.bruto;
+      else if(t.tipo==='prepaid')dPrep+=t.bruto;
+      else if(t.tipo==='credito')dCred+=t.bruto;
+    });
+    diaData.push([fmtDate(d.fecha),dQR,dQR*(1-atQR),dDeb+dPrep,(dDeb+dPrep)*(1-atDeb),dCred,dCred*(1-atCred),dQR+dDeb+dPrep+dCred,(dQR*(1-atQR)+(dDeb+dPrep)*(1-atDeb)+dCred*(1-atCred))]);
+  });
+  const ws2=XLSX.utils.aoa_to_sheet(diaData);
+  ws2['!cols']=Array(9).fill({wch:15});
+  XLSX.utils.book_append_sheet(wb,ws2,'Por Dia');
+
+  // HOJA 3: Cruce banco
+  if(bancoMovs.length){
+    const banco={};bancoMovs.forEach(m=>{if(!banco[m.fecha])banco[m.fecha]={qr:0,debito:0,credito:0};banco[m.fecha][m.tipo]=(banco[m.fecha][m.tipo]||0)+m.importe;});
+    const cruceData=[['Fecha venta','Tipo','Fecha acreditacion','Neto esperado','Banco acredito','Diferencia','Estado']];
+    const acredMap={};
+    cloverDias.forEach(d=>d.tarjetas.forEach(t=>{
+      const fa=addHab(d.fecha,diasHab(t.tipo));
+      const key=d.fecha+'|'+fa+'|'+(t.tipo==='qr'?'qr':t.tipo==='credito'?'credito':'debito');
+      if(!acredMap[key])acredMap[key]={fv:d.fecha,fa,tipo:t.tipo==='qr'?'qr':t.tipo==='credito'?'credito':'debito',bruto:0,com:0};
+      acredMap[key].bruto+=t.bruto;acredMap[key].com+=t.bruto*atotal(arMap(t.tipo),cfg.iva);
+    }));
+    Object.values(acredMap).sort((a,b)=>a.fa.localeCompare(b.fa)).forEach(g=>{
+      const neto=g.bruto-g.com;
+      const bancoTipo=(banco[g.fa]||{})[g.tipo]||0;
+      const calza=bancoTipo>=neto;
+      const isFut=g.fa>todayISO();
+      cruceData.push([fmtDate(g.fv),g.tipo.toUpperCase(),fmtDate(g.fa),neto,bancoTipo||'',bancoTipo?bancoTipo-neto:'',isFut?'Pendiente':calza?'CALZA':'REVISAR']);
+    });
+    const ws3=XLSX.utils.aoa_to_sheet(cruceData);
+    ws3['!cols']=Array(7).fill({wch:16});
+    XLSX.utils.book_append_sheet(wb,ws3,'Cruce Banco');
+  }
+
+  // HOJA 4: Transacciones detalle
+  if(txDetalle.length){
+    const txData=[['Fecha','Hora','Tipo','Tarjeta/Medio','Importe','Auth','ID Pago','Nota']];
+    txDetalle.forEach(t=>txData.push([fmtDate(t.fecha),t.hora||'',t.tipo||'',t.nombre||'',t.bruto||0,t.auth||'',t.idPago||'',t.nota||'']));
+    const ws4=XLSX.utils.aoa_to_sheet(txData);
+    ws4['!cols']=[{wch:12},{wch:10},{wch:10},{wch:24},{wch:14},{wch:12},{wch:20},{wch:30}];
+    XLSX.utils.book_append_sheet(wb,ws4,'Transacciones');
+  }
+
+  XLSX.writeFile(wb,'Clover_'+fmtDate(fechas[0]).replace(/\//g,'-')+'_al_'+fmtDate(fechas[fechas.length-1]).replace(/\//g,'-')+'.xlsx');
+}
+
+// ── NAV ───────────────────────────────────────────────────────────
+function showPanel(name,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if(el)el.classList.add('active');
+  if(name==='transacciones')renderTransacciones();
+  if(name==='banco')renderBanco();
+  if(name==='cruce')renderCruce();
+  if(name==='mensual')renderMensual();
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+document.getElementById('fecha-top').textContent=new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+document.getElementById('login-btn').addEventListener('click',verificarPass);
+document.getElementById('login-pass').addEventListener('keydown',function(e){if(e.key==='Enter')verificarPass();});
+document.getElementById('btn-cerrar').addEventListener('click',function(){if(confirm('Cerrar sesion?')){localStorage.removeItem('clover_v3_session');location.reload();}});
+
+// Verificar sesion activa
+(async()=>{
+  try{
+    const stored=localStorage.getItem('clover_v3_session');
+    if(stored===PASS_HASH){document.getElementById('login-screen').style.display='none';}
+  }catch(e){}
+})();
+
+// Cargar datos guardados
+cargarStorage();
+if(cloverDias.length){
+  document.getElementById('zone-clover').classList.add('loaded');
+  document.getElementById('status-clover').textContent=cloverDias.length+' dias restaurados';
+  if(bancoMovs.length){document.getElementById('zone-banco').classList.add('loaded');document.getElementById('status-banco').textContent=bancoMovs.length+' movimientos banco';}
+  renderAll();
+}
+</script>
+</body>
+</html>
