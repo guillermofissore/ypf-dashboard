@@ -133,7 +133,7 @@
     <div style="font-family:monospace;font-size:11px;color:#555a72;margin-bottom:28px;">YPF Daniel Fissore · APIES 02229</div>
     <input type="password" id="login-pass" placeholder="Contraseña"
       style="width:100%;height:44px;padding:0 16px;border-radius:9px;border:1px solid #2e3245;background:#1a1d27;color:#e8eaf2;font-size:14px;font-family:Arial,sans-serif;margin-bottom:10px;outline:none;box-sizing:border-box;"
-      onkeydown="if(event.key==='Enter')document.getElementById('login-btn').click()">
+      >
     <div id="login-error" style="font-size:11px;color:#f87171;margin-bottom:10px;min-height:16px;font-family:monospace;"></div>
     <button id="login-btn"
       style="width:100%;height:44px;border-radius:9px;border:none;background:#378ADD;color:#fff;font-family:Arial,sans-serif;font-weight:700;font-size:14px;cursor:pointer;">
@@ -1183,6 +1183,7 @@ document.getElementById('fecha-top').textContent=new Date().toLocaleDateString('
 renderCfgTabla();
 // Conectar botón login via event listener (evita ReferenceError por orden de carga)
 document.getElementById('login-btn').addEventListener('click', verificarPass);
+document.getElementById('login-pass').addEventListener('keydown', function(e){ if(e.key==='Enter') verificarPass(); });
 // Cargar datos guardados
 cargarStorage();
 if(cloverDias.length){
