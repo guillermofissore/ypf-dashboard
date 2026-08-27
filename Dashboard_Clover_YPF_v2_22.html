@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YPF Control · Daniel Fissore</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ─────────────────────────────────────────── */
+:root{
+  --bg:#0a0c10;
+  --surface:#111318;
+  --surface2:#181b22;
+  --surface3:#1e2129;
+  --border:#252a35;
+  --border2:#2e3444;
+  --ink:#e2e6f0;
+  --ink2:#8892a8;
+  --ink3:#525d73;
+  --ypf-red:#e8002d;
+  --ypf-red2:rgba(232,0,45,.12);
+  --ypf-red3:rgba(232,0,45,.06);
+  --green:#00c98d;
+  --green2:rgba(0,201,141,.1);
+  --green3:rgba(0,201,141,.04);
+  --amber:#f5a623;
+  --amber2:rgba(245,166,35,.1);
+  --red:#f04050;
+  --red2:rgba(240,64,80,.1);
+  --blue:#4a9eff;
+  --blue2:rgba(74,158,255,.1);
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+  --r:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:13px;min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* ── LOGIN ─────────────────────────────────────────── */
+#login{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center}
+.login-box{width:340px;text-align:center}
+.login-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:32px}
+.login-logo-mark{width:40px;height:40px;background:var(--ypf-red);border-radius:6px;display:flex;align-items:center;justify-content:center}
+.login-logo-mark svg{width:22px;height:22px;fill:#fff}
+.login-title{font-family:var(--mono);font-size:18px;font-weight:600;letter-spacing:-.01em}
+.login-sub{font-size:11px;color:var(--ink3);margin-top:4px;font-family:var(--mono)}
+.login-input{width:100%;margin-top:28px;padding:12px 16px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--ink);font-family:var(--mono);font-size:13px;outline:none;transition:border .2s}
+.login-input:focus{border-color:var(--ypf-red)}
+.login-btn{width:100%;margin-top:10px;padding:12px;background:var(--ypf-red);border:none;border-radius:var(--r);color:#fff;font-family:var(--mono);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.04em;transition:opacity .15s}
+.login-btn:hover{opacity:.88}
+.login-err{font-size:11px;color:var(--ypf-red);margin-top:8px;font-family:var(--mono);min-height:16px}
+
+/* ── TOPBAR ────────────────────────────────────────── */
+.topbar{height:48px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px;position:sticky;top:0;z-index:100}
+.topbar-logo{display:flex;align-items:center;gap:8px}
+.topbar-mark{width:24px;height:24px;background:var(--ypf-red);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.topbar-mark svg{width:14px;height:14px;fill:#fff}
+.topbar-name{font-family:var(--mono);font-weight:600;font-size:13px;letter-spacing:.02em}
+.topbar-apies{font-family:var(--mono);font-size:10px;color:var(--ink3)}
+.topbar-spacer{flex:1}
+.topbar-date{font-family:var(--mono);font-size:10px;color:var(--ink3)}
+.topbar-exit{padding:5px 10px;background:transparent;border:1px solid var(--border2);border-radius:5px;color:var(--ink3);font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s}
+.topbar-exit:hover{border-color:var(--ypf-red);color:var(--ypf-red)}
+
+/* ── NAV ───────────────────────────────────────────── */
+.nav{background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 20px;overflow-x:auto}
+.nav-tab{padding:12px 14px;font-family:var(--mono);font-size:11px;font-weight:500;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;letter-spacing:.03em}
+.nav-tab:hover{color:var(--ink2)}
+.nav-tab.active{color:var(--ink);border-bottom-color:var(--ypf-red)}
+
+/* ── LAYOUT ────────────────────────────────────────── */
+.main{padding:20px;max-width:1200px}
+.panel{display:none}.panel.active{display:block}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:900px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+
+/* ── CARDS ─────────────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.card-title{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--ink3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px}
+
+/* ── UPLOAD ZONES ──────────────────────────────────── */
+.uploads{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:14px}
+@media(max-width:900px){.uploads{grid-template-columns:1fr}}
+.upload{border:1.5px dashed var(--border2);border-radius:var(--r);padding:18px 14px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:var(--surface2)}
+.upload:hover,.upload.drag{border-color:var(--ypf-red);background:var(--ypf-red3)}
+.upload.loaded{border-style:solid;border-color:var(--green);background:var(--green3)}
+.upload input{display:none}
+.upload-icon{font-size:22px;margin-bottom:6px}
+.upload-label{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--ink2);margin-bottom:3px}
+.upload-sub{font-size:10px;color:var(--ink3);line-height:1.5}
+.upload-status{font-size:10px;color:var(--green);margin-top:6px;font-family:var(--mono);min-height:14px}
+.upload-clear{position:absolute;top:8px;right:8px;background:transparent;border:none;color:var(--ink3);cursor:pointer;font-size:14px;line-height:1;display:none}
+.upload.loaded .upload-clear{display:block}
+.upload-clear:hover{color:var(--red)}
+
+/* ── METRICS ───────────────────────────────────────── */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:900px){.metrics{grid-template-columns:repeat(2,1fr)}}
+.metric{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:13px 14px;border-top:2px solid var(--border2)}
+.metric.m-red{border-top-color:var(--ypf-red)}.metric.m-red .mv{color:var(--ypf-red)}
+.metric.m-green{border-top-color:var(--green)}.metric.m-green .mv{color:var(--green)}
+.metric.m-amber{border-top-color:var(--amber)}.metric.m-amber .mv{color:var(--amber)}
+.metric.m-blue{border-top-color:var(--blue)}.metric.m-blue .mv{color:var(--blue)}
+.ml{font-family:var(--mono);font-size:9px;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+.mv{font-family:var(--mono);font-size:18px;font-weight:600;line-height:1.1;color:var(--ink)}
+.ms{font-size:10px;color:var(--ink3);margin-top:3px;font-family:var(--mono)}
+
+/* ── TABLES ────────────────────────────────────────── */
+.tw{overflow-x:auto;border-radius:6px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead tr{background:var(--surface2)}
+th{padding:8px 10px;text-align:left;font-family:var(--mono);font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3);border-bottom:1px solid var(--border);white-space:nowrap}
+th.r,td.r{text-align:right}
+th.c,td.c{text-align:center}
+td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--ink2);font-size:12px}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.015)}
+td.tb{color:var(--ink);font-weight:500}
+td.tm{font-family:var(--mono)}
+td.tg{color:var(--green);font-family:var(--mono);font-weight:500}
+td.ta{color:var(--amber);font-family:var(--mono)}
+td.tr{color:var(--red);font-family:var(--mono)}
+tr.tfoot td{background:var(--surface2);font-weight:600;color:var(--ink);border-top:1px solid var(--border2)}
+tr.tneto td{background:rgba(0,201,141,.06);font-weight:700;border-top:2px solid rgba(0,201,141,.25)}
+
+/* ── BADGES ────────────────────────────────────────── */
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:.04em}
+.b-green{background:var(--green2);color:var(--green);border:1px solid rgba(0,201,141,.25)}
+.b-amber{background:var(--amber2);color:var(--amber);border:1px solid rgba(245,166,35,.25)}
+.b-red{background:var(--red2);color:var(--red);border:1px solid rgba(240,64,80,.25)}
+.b-blue{background:var(--blue2);color:var(--blue);border:1px solid rgba(74,158,255,.25)}
+.b-gray{background:var(--surface3);color:var(--ink3);border:1px solid var(--border)}
+
+/* ── ALERTS ────────────────────────────────────────── */
+.alert{border-radius:var(--r);padding:11px 14px;margin-bottom:14px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:10px}
+.alert-ok{background:var(--green2);border:1px solid rgba(0,201,141,.2);color:var(--green)}
+.alert-warn{background:var(--amber2);border:1px solid rgba(245,166,35,.2);color:var(--amber)}
+.alert-err{background:var(--red2);border:1px solid rgba(240,64,80,.2);color:var(--red)}
+.alert-info{background:var(--blue2);border:1px solid rgba(74,158,255,.2);color:var(--blue)}
+
+/* ── BTNS ──────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:6px;border:1px solid var(--border2);font-family:var(--mono);font-size:11px;font-weight:500;cursor:pointer;background:var(--surface2);color:var(--ink2);transition:all .15s}
+.btn:hover{border-color:var(--green);color:var(--green)}
+.btn-red:hover{border-color:var(--red);color:var(--red)}
+.btn-amber:hover{border-color:var(--amber);color:var(--amber)}
+.btn-blue{border-color:rgba(74,158,255,.3);color:var(--blue)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ── EMPTY ─────────────────────────────────────────── */
+.empty{text-align:center;padding:48px 20px;color:var(--ink3)}
+.empty-icon{font-size:28px;margin-bottom:10px}
+.empty-title{font-family:var(--mono);font-size:13px;color:var(--ink2);font-weight:600;margin-bottom:5px}
+.empty-sub{font-size:11px;line-height:1.6}
+
+/* ── CONFIG ────────────────────────────────────────── */
+.cfg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.cfg-field label{font-family:var(--mono);font-size:9px;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px}
+.cfg-field input{width:100%;padding:8px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--ink);font-family:var(--mono);font-size:12px;outline:none;transition:border .2s}
+.cfg-field input:focus{border-color:var(--ypf-red)}
+
+/* ── ROW STATES ────────────────────────────────────── */
+tr.row-ok td{background:rgba(0,201,141,.03)}
+tr.row-warn td{background:rgba(245,166,35,.03)}
+tr.row-err td{background:rgba(240,64,80,.03)}
+tr.row-fut td{background:rgba(74,158,255,.03)}
+
+.sep{height:14px}
+.label-section{font-family:var(--mono);font-size:9px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-mark">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <div>
+        <div class="login-title">YPF CONTROL</div>
+        <div class="login-sub">Daniel Fissore · APIES 02229</div>
+      </div>
+    </div>
+    <input type="password" class="login-input" id="lpass" placeholder="Contraseña" autocomplete="current-password">
+    <div class="login-err" id="lerr"></div>
+    <button class="login-btn" id="lbtn">Ingresar →</button>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="topbar-mark">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+    <div>
+      <div class="topbar-name">YPF CONTROL</div>
+      <div class="topbar-apies">Daniel Fissore · APIES 02229</div>
+    </div>
+  </div>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-date" id="topdate"></div>
+  <button class="topbar-exit" id="exitbtn">Cerrar sesión</button>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="nav-tab active" data-panel="carga">↑ Carga datos</div>
+  <div class="nav-tab" data-panel="cruce">⇌ Cruce</div>
+  <div class="nav-tab" data-panel="bna">Banco BNA</div>
+  <div class="nav-tab" data-panel="fiserv">Fiserv</div>
+  <div class="nav-tab" data-panel="config">Config</div>
+</div>
+
+<div class="main">
+
+<!-- ═══ CARGA ═══════════════════════════════════════════ -->
+<div id="panel-carga" class="panel active">
+
+  <div class="label-section">Fuentes de datos</div>
+  <div class="uploads">
+
+    <!-- Terminal 1 -->
+    <div class="upload" id="z-t1" onclick="document.getElementById('f-t1').click()"
+      ondragover="ev.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="dropFile(event,'t1')">
+      <input type="file" id="f-t1" accept=".csv,.xlsx,.xls" onchange="loadClover(this.files[0],'t1')">
+      <button class="upload-clear" onclick="event.stopPropagation();clearData('t1')">×</button>
+      <div class="upload-icon">📊</div>
+      <div class="upload-label">Clover Terminal 1</div>
+      <div class="upload-sub">Formato A (resumen) o B (payments)<br>CSV o Excel</div>
+      <div class="upload-status" id="s-t1"></div>
+    </div>
+
+    <!-- Terminal 2 -->
+    <div class="upload" id="z-t2" onclick="document.getElementById('f-t2').click()"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="dropFile(event,'t2')">
+      <input type="file" id="f-t2" accept=".csv,.xlsx,.xls" onchange="loadClover(this.files[0],'t2')">
+      <button class="upload-clear" onclick="event.stopPropagation();clearData('t2')">×</button>
+      <div class="upload-icon">📊</div>
+      <div class="upload-label">Clover Terminal 2</div>
+      <div class="upload-sub">Formato A (resumen) o B (payments)<br>CSV o Excel</div>
+      <div class="upload-status" id="s-t2"></div>
+    </div>
+
+    <!-- BNA -->
+    <div class="upload" id="z-bna" onclick="document.getElementById('f-bna').click()"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="dropFile(event,'bna')">
+      <input type="file" id="f-bna" accept=".csv,.xlsx,.xls" onchange="loadBNA(this.files[0])">
+      <button class="upload-clear" onclick="event.stopPropagation();clearData('bna')">×</button>
+      <div class="upload-icon">🏦</div>
+      <div class="upload-label">Extracto BNA</div>
+      <div class="upload-sub">Cuenta corriente<br>XLS o CSV · Cargar semanalmente</div>
+      <div class="upload-status" id="s-bna"></div>
+    </div>
+
+    <!-- Fiserv -->
+    <div class="upload" id="z-fiserv" onclick="document.getElementById('f-fiserv').click()"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="dropFile(event,'fiserv')">
+      <input type="file" id="f-fiserv" accept=".csv,.xlsx,.xls" onchange="loadFiserv(this.files[0])">
+      <button class="upload-clear" onclick="event.stopPropagation();clearData('fiserv')">×</button>
+      <div class="upload-icon">🏢</div>
+      <div class="upload-label">Liquidaciones Fiserv</div>
+      <div class="upload-sub">Liquidaciones mensuales<br>Excel o CSV</div>
+      <div class="upload-status" id="s-fiserv"></div>
+    </div>
+
+  </div>
+
+  <!-- Estado de datos cargados -->
+  <div class="card">
+    <div class="card-title">Estado actual</div>
+    <div id="estado-carga">
+      <div class="empty"><div class="empty-icon">↑</div><div class="empty-title">Sin datos</div><div class="empty-sub">Cargá los archivos arriba para comenzar</div></div>
+    </div>
+    <div class="sep"></div>
+    <div class="btn-row">
+      <button class="btn btn-blue" onclick="exportBackup()">↓ Exportar backup</button>
+      <button class="btn" onclick="importBackup()">↑ Importar backup</button>
+      <button class="btn btn-amber" onclick="exportExcel()">↓ Exportar Excel</button>
+      <button class="btn btn-red" onclick="clearAll()">Limpiar todo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CRUCE ═══════════════════════════════════════════ -->
+<div id="panel-cruce" class="panel">
+  <div id="cruce-content">
+    <div class="empty"><div class="empty-icon">⇌</div><div class="empty-title">Cargá los datos</div><div class="empty-sub">Necesitás al menos Clover + BNA o Clover + Fiserv</div></div>
+  </div>
+</div>
+
+<!-- ═══ BNA ════════════════════════════════════════════ -->
+<div id="panel-bna" class="panel">
+  <div id="bna-filter" style="display:none;margin-bottom:12px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input type="text" id="bna-q" placeholder="Buscar concepto o importe..." oninput="renderBNA()"
+        style="flex:1;min-width:200px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--ink);font-family:var(--mono);font-size:11px;outline:none">
+      <select id="bna-tipo" onchange="renderBNA()"
+        style="padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--ink);font-family:var(--mono);font-size:11px;outline:none">
+        <option value="">Todos los tipos</option>
+        <option value="QR">QR / DEBIN</option>
+        <option value="Debito">Débito</option>
+        <option value="Credito">Crédito</option>
+      </select>
+    </div>
+  </div>
+  <div id="bna-content">
+    <div class="empty"><div class="empty-icon">🏦</div><div class="empty-title">Sin extracto bancario</div><div class="empty-sub">Cargá el extracto BNA en la pestaña Carga datos</div></div>
+  </div>
+</div>
+
+<!-- ═══ FISERV ═══════════════════════════════════════════ -->
+<div id="panel-fiserv" class="panel">
+  <div id="fiserv-content">
+    <div class="empty"><div class="empty-icon">🏢</div><div class="empty-title">Sin liquidaciones</div><div class="empty-sub">Cargá el archivo Fiserv en la pestaña Carga datos</div></div>
+  </div>
+</div>
+
+<!-- ═══ CONFIG ═══════════════════════════════════════════ -->
+<div id="panel-config" class="panel">
+  <div class="card" style="margin-bottom:12px">
+    <div class="card-title">Aranceles Clover c/IVA</div>
+    <div class="cfg-grid">
+      <div class="cfg-field"><label>QR / Transferencia (%)</label><input type="number" id="cfg-qr" value="0.968" step="0.001" min="0" oninput="renderAll()"></div>
+      <div class="cfg-field"><label>Débito / Prepaid (%)</label><input type="number" id="cfg-deb" value="1.210" step="0.001" min="0" oninput="renderAll()"></div>
+      <div class="cfg-field"><label>Crédito 1 cuota (%)</label><input type="number" id="cfg-cred" value="2.178" step="0.001" min="0" oninput="renderAll()"></div>
+      <div class="cfg-field"><label>IVA sobre arancel (%)</label><input type="number" id="cfg-iva" value="21" step="0.1" min="0" oninput="renderAll()"></div>
+    </div>
+    <div class="sep"></div>
+    <button class="btn" onclick="resetConfig()">Restaurar defaults</button>
+  </div>
+  <div class="card">
+    <div class="card-title">Días de acreditación</div>
+    <div style="font-size:12px;color:var(--ink2);line-height:2.2">
+      <span style="color:var(--green);font-family:var(--mono)">QR / DEBIN</span> → 0 días hábiles (mismo día)<br>
+      <span style="color:var(--green);font-family:var(--mono)">Débito + Prepaid</span> → 1 día hábil<br>
+      <span style="color:var(--green);font-family:var(--mono)">Crédito Visa / MC</span> → 2 días hábiles<br>
+      <span style="color:var(--amber);font-family:var(--mono)">Amex 1 cuota</span> → 3 días hábiles<br>
+      <span style="font-size:10px;color:var(--ink3)">No se cuentan sábados, domingos ni feriados nacionales</span>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════
+const HASH='013d7a2913436290e5463bffb2f697d79ba9389d5c6cd8ffc4576044b442edcb';
+async function sha256(s){
+  try{
+    const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
+    return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');
+  }catch(e){return s==='ypf2229'?HASH:'';}
+}
+async function doLogin(){
+  const p=document.getElementById('lpass').value;
+  if(!p){document.getElementById('lerr').textContent='Ingresá la contraseña';return;}
+  const h=await sha256(p);
+  if(h===HASH){
+    localStorage.setItem('ypf_s',HASH);
+    document.getElementById('login').style.display='none';
+    init();
+  } else {
+    document.getElementById('lerr').textContent='Contraseña incorrecta';
+    document.getElementById('lpass').value='';
+  }
+}
+document.getElementById('lbtn').onclick=doLogin;
+document.getElementById('lpass').onkeydown=e=>{if(e.key==='Enter')doLogin()};
+document.getElementById('exitbtn').onclick=()=>{
+  if(confirm('¿Cerrar sesión?')){localStorage.removeItem('ypf_s');location.reload();}
+};
+if(localStorage.getItem('ypf_s')===HASH){
+  document.getElementById('login').style.display='none';
+  setTimeout(init,0);
+}
+
+// ═══════════════════════════════════════════════════════
+// STORAGE
+// ═══════════════════════════════════════════════════════
+let DATA={t1:null,t2:null,bna:[],fiserv:[]};
+const SK='ypfv2_data';
+function save(){try{localStorage.setItem(SK,JSON.stringify(DATA));}catch(e){}}
+function load(){try{const d=localStorage.getItem(SK);if(d)DATA=JSON.parse(d);}catch(e){}}
+
+// ═══════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════
+function fmt(n){if(!n&&n!==0)return'—';return'$\u00a0'+Math.abs(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtD(s){if(!s)return'—';const p=s.split('-');return`${p[2]}/${p[1]}/${p[0]}`;}
+function parseNum(s){
+  if(!s&&s!==0)return 0;if(typeof s==='number')return s;
+  s=String(s).replace(/\$/g,'').replace(/\u00a0/g,'').replace(/\xa0/g,'').replace(/\s/g,'').trim();
+  const nums=s.match(/\d[\d.,]*/);if(!nums)return 0;let n=nums[0];
+  if(n.includes(',')&&n.includes('.'))return parseFloat(n.replace(/\./g,'').replace(',','.'))||0;
+  if(n.includes(',')&&!n.includes('.'))return parseFloat(n.replace(',','.'))||0;
+  return parseFloat(n)||0;
+}
+function parseDate(s){
+  if(!s)return null;s=String(s).trim();
+  let m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(m){const y=m[3].length===2?'20'+m[3]:m[3];return`${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;}
+  m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return`${m[1]}-${m[2]}-${m[3]}`;
+  const MESES={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+  m=s.match(/^(\d{2})-([A-Za-z]{3})-(\d{4})/);if(m&&MESES[m[2]])return`${m[3]}-${MESES[m[2]]}-${m[1]}`;
+  return null;
+}
+function clasificarClover(medio,marca){
+  const n=(String(medio||'')+' '+String(marca||'')).toLowerCase().replace(/\u00e9/g,'e').replace(/\u00ed/g,'i').replace(/\u00f3/g,'o').replace(/\u00fa/g,'u').replace(/\u00e1/g,'a');
+  if(/qr|posnet|transfer|mercado pago|naranja|uala|agil|prex|bezza|cdni|claro pay|billetera/.test(n))return'QR';
+  if(/prepaid|prepag|prepaga/.test(n))return'Prepaid';
+  if(/deb/.test(n))return'Debito';
+  if(/cred|visa|mastercard|master|amex|argencard|cabal/.test(n))return'Credito';
+  return'Otro';
+}
+function detectBNA(c){
+  c=(c||'').toLowerCase();
+  if(/dep\.?\s*ch\.|cheque|echeq|gravamen|comision|sirtac|impuesto|retenc/.test(c))return null;
+  if(/debin/.test(c))return'QR';
+  if(/liq master deb|master deb 24|visa deb/.test(c))return'Debito';
+  if(/liq mastercard|mastercard 24|visa cred|amex|argencard|cabal/.test(c))return'Credito';
+  return null;
+}
+function getCfg(){
+  return{
+    qr:parseFloat(document.getElementById('cfg-qr').value)||0.968,
+    deb:parseFloat(document.getElementById('cfg-deb').value)||1.210,
+    cred:parseFloat(document.getElementById('cfg-cred').value)||2.178,
+    iva:parseFloat(document.getElementById('cfg-iva').value)||21,
+  };
+}
+function arNeto(bruto,tipo){
+  const c=getCfg();
+  const ar={QR:c.qr,Debito:c.deb,Prepaid:c.deb,Credito:c.cred}[tipo]||0;
+  return bruto*(1-ar/100);
+}
+const FERIADOS=new Set(['2026-01-01','2026-02-16','2026-02-17','2026-03-24','2026-03-27',
+  '2026-04-02','2026-05-01','2026-05-25','2026-06-15','2026-06-20',
+  '2026-07-09','2026-08-17','2026-10-12','2026-11-20','2026-12-08','2026-12-25']);
+function esHabil(d){return d.getDay()!==0&&d.getDay()!==6&&!FERIADOS.has(d.toISOString().split('T')[0]);}
+function addHab(iso,dias){
+  if(!dias)return iso;
+  const d=new Date(iso+'T12:00:00');let c=0;
+  while(c<dias){d.setDate(d.getDate()+1);if(esHabil(d))c++;}
+  return d.toISOString().split('T')[0];
+}
+function diasHab(tipo){if(tipo==='QR')return 0;if(tipo==='Credito')return 2;return 1;}
+function hoy(){return new Date().toISOString().split('T')[0];}
+function badgeTipo(t){
+  const m={QR:'b-amber',Debito:'b-green',Prepaid:'b-gray',Credito:'b-blue',Otro:'b-gray'};
+  const l={QR:'QR',Debito:'Débito',Prepaid:'Prepaid',Credito:'Crédito',Otro:'Otro'};
+  return`<span class="badge ${m[t]||'b-gray'}">${l[t]||t}</span>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// PARSE CSV
+// ═══════════════════════════════════════════════════════
+function splitCSVLine(line,sep){
+  const res=[];let cur='';let inQ=false;
+  for(const c of line){
+    if(c==='"'){inQ=!inQ;}
+    else if(c===sep&&!inQ){res.push(cur);cur='';}
+    else cur+=c;
+  }
+  res.push(cur);return res;
+}
+function parseCSV(text){
+  text=text.replace(/\u00a0/g,' ');
+  const lines=text.trim().split(/\r?\n/);if(!lines.length)return[];
+  const sep=lines[0].includes(';')?';':',';
+  const headers=lines[0].split(sep).map(h=>h.trim().replace(/^["']|["']$/g,''));
+  return lines.slice(1).filter(l=>l.trim()).map(l=>{
+    const cols=splitCSVLine(l,sep);
+    const obj={};
+    headers.forEach((h,i)=>obj[h]=(cols[i]||'').trim().replace(/^["']|["']$/g,'').replace(/\u00a0/g,''));
+    return obj;
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// CLOVER FORMATO A (resumen mensual)
+// ═══════════════════════════════════════════════════════
+function parsearFormatoA(text){
+  text=text.replace(/\u00a0/g,' ');
+  const result={};
+  const lines=text.split(/\r?\n/);
+  let enMedios=false,pastHeader=false;
+  for(const rawLine of lines){
+    const line=rawLine.trim();
+    if(!line)continue;
+    if(line.toUpperCase()==='MEDIOS DE PAGO'){enMedios=true;pastHeader=false;continue;}
+    if(enMedios&&!pastHeader&&line.toLowerCase().includes('medios de pago')&&line.includes(',')){pastHeader=true;continue;}
+    if(enMedios&&pastHeader&&line.includes(',')){
+      const sep=line.includes(';')?';':',';
+      const cols=splitCSVLine(line,sep).map(c=>c.replace(/\u00a0/g,'').replace(/^["']|["']$/g,'').trim());
+      const nombre=cols[0];
+      if(!nombre||nombre.toLowerCase().startsWith('total'))break;
+      const v=parseNum(cols[1]);
+      if(v>0)result[nombre]=(result[nombre]||0)+v;
+    }
+  }
+  return result;
+}
+
+// ═══════════════════════════════════════════════════════
+// LOAD CLOVER
+// ═══════════════════════════════════════════════════════
+function dropFile(e,dest){e.preventDefault();document.getElementById('z-'+dest).classList.remove('drag');const f=e.dataTransfer.files[0];if(!f)return;if(dest==='bna')loadBNA(f);else if(dest==='fiserv')loadFiserv(f);else loadClover(f,dest);}
+function loadClover(file,dest){
+  if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  const onText=(text,fname)=>{
+    const tl=text.toLowerCase();
+    let medios={};
+    if(tl.includes('medios de pago')||tl.includes('ventas brutas')){
+      medios=parsearFormatoA(text);
+      const nMedios=Object.keys(medios).length;
+      if(!nMedios){alert('No se encontró la sección MEDIOS DE PAGO en el archivo.');return;}
+      const total=Object.values(medios).reduce((a,b)=>a+b,0);
+      DATA[dest]={tipo:'A',medios,total,fname};
+      document.getElementById('s-'+dest).textContent=`✓ ${nMedios} medios · ${fmt(total)}`;
+    } else {
+      // Formato B (Payments)
+      const rows=parseCSV(text);
+      const exitosas=rows.filter(r=>(r['Resultado']||r['resultado']||'').trim().toUpperCase()==='SUCCESS');
+      if(!exitosas.length){alert('No se encontraron transacciones exitosas en el archivo.');return;}
+      const mediosB={};
+      exitosas.forEach(r=>{
+        const keys={};Object.keys(r).forEach(k=>keys[k.toLowerCase().trim()]=r[k]);
+        const importe=parseNum(keys['importe']||0);
+        const tipo=clasificarClover(keys['medio de pago']||'',keys['marca de la tarjeta']||'');
+        mediosB[tipo]=(mediosB[tipo]||0)+importe;
+      });
+      const total=Object.values(mediosB).reduce((a,b)=>a+b,0);
+      DATA[dest]={tipo:'B',medios:mediosB,total,fname,txs:exitosas.length};
+      document.getElementById('s-'+dest).textContent=`✓ ${exitosas.length} txs · ${fmt(total)}`;
+    }
+    document.getElementById('z-'+dest).classList.add('loaded');
+    save();renderAll();
+  };
+  if(ext==='xlsx'||ext==='xls'){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        onText(XLSX.utils.sheet_to_csv(ws),file.name);
+      }catch(err){alert('Error leyendo Excel: '+err.message);}
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    const reader=new FileReader();
+    reader.onload=e=>onText(e.target.result,file.name);
+    reader.readAsText(file,'UTF-8');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// LOAD BNA
+// ═══════════════════════════════════════════════════════
+function loadBNA(file){
+  if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  const onRows=(rows)=>{
+    const movs=[];
+    rows.forEach(r=>{
+      const keys={};Object.keys(r).forEach(k=>keys[k.toLowerCase().trim()]=r[k]);
+      const fk=Object.keys(keys).find(k=>k.includes('fecha'))||'fecha';
+      const ck=Object.keys(keys).find(k=>k.includes('concepto')||k.includes('descripci'))||'concepto';
+      const mk=Object.keys(keys).find(k=>k.includes('monto')||k.includes('importe')||k.includes('haber'))||'monto';
+      const fecha=parseDate(keys[fk]||keys[Object.keys(keys)[0]]||'');
+      const concepto=(keys[ck]||keys[Object.keys(keys)[2]]||'').trim();
+      const monto=parseNum(keys[mk]!==undefined?keys[mk]:(keys[Object.keys(keys)[3]]||0));
+      if(!fecha||monto<=0)return;
+      const tipo=detectBNA(concepto);
+      if(!tipo)return;
+      const comp=String(keys['comprobante']||keys[Object.keys(keys)[1]]||'').trim();
+      movs.push({fecha,concepto,monto,tipo,comp});
+    });
+    if(!movs.length){alert('No se encontraron movimientos Clover (DEBIN/Débito/Crédito) en el extracto.');return;}
+    // Agregar a existentes sin duplicar
+    const existing=new Set(DATA.bna.map(m=>`${m.fecha}|${m.comp}|${m.monto}`));
+    let nuevos=0;
+    movs.forEach(m=>{
+      const key=`${m.fecha}|${m.comp}|${m.monto}`;
+      if(!m.comp||!existing.has(key)){DATA.bna.push(m);existing.add(key);nuevos++;}
+    });
+    const fechas=[...new Set(DATA.bna.map(m=>m.fecha))].sort();
+    document.getElementById('s-bna').textContent=`✓ ${DATA.bna.length} movs · ${fmtD(fechas[0])} al ${fmtD(fechas[fechas.length-1])}`;
+    document.getElementById('z-bna').classList.add('loaded');
+    save();renderAll();
+  };
+  if(ext==='xlsx'||ext==='xls'){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const arr=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        let hr=0;
+        for(let i=0;i<arr.length;i++){
+          if(String(arr[i][0]||'').toLowerCase().trim()==='fecha'){hr=i;break;}
+        }
+        const headers=arr[hr].map(h=>String(h||'').trim());
+        const rows=arr.slice(hr+1).filter(r=>r[0]).map(r=>{
+          const o={};headers.forEach((h,i)=>o[h]=r[i]!==undefined?r[i]:'');return o;
+        });
+        onRows(rows);
+      }catch(err){alert('Error leyendo XLS: '+err.message);}
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    const reader=new FileReader();
+    reader.onload=e=>{
+      let text=e.target.result;
+      const lines=text.split(/\r?\n/);
+      let start=0;
+      for(let i=0;i<lines.length;i++){
+        if(lines[i].toLowerCase().includes('fecha')&&(lines[i].toLowerCase().includes('concepto')||lines[i].toLowerCase().includes('monto'))){start=i;break;}
+      }
+      onRows(parseCSV(lines.slice(start).join('\n')));
+    };
+    reader.readAsText(file,'latin1');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// LOAD FISERV
+// ═══════════════════════════════════════════════════════
+function loadFiserv(file){
+  if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  const onRows=(rows)=>{
+    if(!rows.length){alert('Sin datos en el archivo Fiserv.');return;}
+    const items=rows.map(r=>{
+      const keys={};Object.keys(r).forEach(k=>keys[k.toLowerCase().trim()]=r[k]);
+      const tarjeta=keys['tarjeta']||keys['medio']||keys[Object.keys(keys)[1]]||'';
+      const periodo=String(keys['periodo']||'').trim();
+      const presentado=parseNum(keys['total presentado']||keys['presentado']||'0');
+      const neto=parseNum(keys['total neto']||keys['neto']||'0');
+      const tl=tarjeta.toLowerCase();
+      let tipo='otro';
+      if(tl.includes('adelanto'))tipo='adelanto';
+      else if(tl.includes('debit')||tl.includes('debito'))tipo='debito';
+      else if(tl.includes('cred')||tl.includes('amex')||tl.includes('argencard')||tl.includes('visa')&&!tl.includes('deb'))tipo='credito';
+      return{tarjeta,periodo,presentado,neto,tipo};
+    }).filter(r=>r.tarjeta&&(r.presentado||r.neto));
+    if(!items.length){alert('No se reconocieron filas en el archivo Fiserv.');return;}
+    DATA.fiserv=items;
+    const totPres=items.filter(r=>r.tipo!=='adelanto').reduce((s,r)=>s+r.presentado,0);
+    const totNeto=items.reduce((s,r)=>s+r.neto,0);
+    document.getElementById('s-fiserv').textContent=`✓ ${items.length} ítems · Pres: ${fmt(totPres)} · Neto: ${fmt(totNeto)}`;
+    document.getElementById('z-fiserv').classList.add('loaded');
+    save();renderAll();
+  };
+  if(ext==='xlsx'||ext==='xls'){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        onRows(XLSX.utils.sheet_to_json(ws,{defval:'',raw:false}));
+      }catch(err){alert('Error: '+err.message);}
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    const reader=new FileReader();
+    reader.onload=e=>onRows(parseCSV(e.target.result));
+    reader.readAsText(file,'UTF-8');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// CLEAR
+// ═══════════════════════════════════════════════════════
+function clearData(dest){
+  if(dest==='bna')DATA.bna=[];
+  else if(dest==='fiserv')DATA.fiserv=[];
+  else DATA[dest]=null;
+  document.getElementById('z-'+dest).classList.remove('loaded');
+  document.getElementById('s-'+dest).textContent='';
+  save();renderAll();
+}
+function clearAll(){
+  if(!confirm('¿Borrar todos los datos?'))return;
+  DATA={t1:null,t2:null,bna:[],fiserv:[]};
+  ['t1','t2','bna','fiserv'].forEach(k=>{
+    document.getElementById('z-'+k).classList.remove('loaded');
+    document.getElementById('s-'+k).textContent='';
+  });
+  localStorage.removeItem(SK);renderAll();
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER ESTADO CARGA
+// ═══════════════════════════════════════════════════════
+function renderEstado(){
+  const el=document.getElementById('estado-carga');
+  const items=[];
+  if(DATA.t1)items.push(`<span style="color:var(--green);font-family:var(--mono)">✓ Terminal 1</span> — ${fmt(DATA.t1.total)}`);
+  if(DATA.t2)items.push(`<span style="color:var(--green);font-family:var(--mono)">✓ Terminal 2</span> — ${fmt(DATA.t2.total)}`);
+  if(DATA.bna.length){
+    const fs=[...new Set(DATA.bna.map(m=>m.fecha))].sort();
+    items.push(`<span style="color:var(--green);font-family:var(--mono)">✓ BNA</span> — ${DATA.bna.length} movs · ${fmtD(fs[0])} al ${fmtD(fs[fs.length-1])}`);
+  }
+  if(DATA.fiserv.length)items.push(`<span style="color:var(--green);font-family:var(--mono)">✓ Fiserv</span> — ${DATA.fiserv.length} ítems`);
+  if(!items.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">↑</div><div class="empty-title">Sin datos</div><div class="empty-sub">Cargá los archivos arriba</div></div>';
+    return;
+  }
+  el.innerHTML='<div style="display:flex;flex-direction:column;gap:8px">'+items.map(i=>`<div style="font-size:12px;color:var(--ink2)">${i}</div>`).join('')+'</div>';
+}
+
+// ═══════════════════════════════════════════════════════
+// CLOVER TOTALES
+// ═══════════════════════════════════════════════════════
+function cloverTotales(){
+  const tot={QR:0,Debito:0,Prepaid:0,Credito:0,Otro:0};
+  [DATA.t1,DATA.t2].forEach(t=>{
+    if(!t)return;
+    Object.entries(t.medios).forEach(([nombre,v])=>{
+      const tipo=clasificarClover(nombre,'');
+      tot[tipo]=(tot[tipo]||0)+v;
+    });
+  });
+  return tot;
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER CRUCE
+// ═══════════════════════════════════════════════════════
+function renderCruce(){
+  const el=document.getElementById('cruce-content');
+  const tieneClover=DATA.t1||DATA.t2;
+  const tieneBNA=DATA.bna.length>0;
+  const tieneFiserv=DATA.fiserv.length>0;
+  if(!tieneClover){
+    el.innerHTML='<div class="empty"><div class="empty-icon">⇌</div><div class="empty-title">Cargá al menos un terminal Clover</div></div>';
+    return;
+  }
+  const clov=cloverTotales();
+  const c_deb=clov.Debito+clov.Prepaid;
+  const c_cred=clov.Credito;
+  const c_qr=clov.QR;
+  const n_deb=arNeto(c_deb,'Debito');
+  const n_cred=arNeto(c_cred,'Credito');
+  const n_qr=arNeto(c_qr,'QR');
+  // BNA totales
+  const b={QR:0,Debito:0,Credito:0};
+  DATA.bna.forEach(m=>{b[m.tipo]=(b[m.tipo]||0)+m.monto;});
+  // Fiserv totales
+  const f={debito:0,credito:0,adelanto:0,presentadoDeb:0,presentadoCred:0};
+  DATA.fiserv.forEach(r=>{
+    if(r.tipo==='debito'){f.debito+=r.neto;f.presentadoDeb+=r.presentado;}
+    else if(r.tipo==='credito'){f.credito+=r.neto;f.presentadoCred+=r.presentado;}
+    else if(r.tipo==='adelanto'){f.adelanto+=r.neto;}
+  });
+  const f_cred_total=f.credito+f.adelanto;
+
+  let html='';
+
+  // ── CLOVER RESUMEN
+  html+=`<div class="metrics">
+    <div class="metric m-amber"><div class="ml">QR / PosNet</div><div class="mv">${fmt(c_qr)}</div><div class="ms">Neto est. ${fmt(n_qr)}</div></div>
+    <div class="metric m-green"><div class="ml">Débito + Prepaid</div><div class="mv">${fmt(c_deb)}</div><div class="ms">Neto est. ${fmt(n_deb)}</div></div>
+    <div class="metric m-blue"><div class="ml">Crédito</div><div class="mv">${fmt(c_cred)}</div><div class="ms">Neto est. ${fmt(n_cred)}</div></div>
+    <div class="metric m-red"><div class="ml">Total Clover</div><div class="mv">${fmt(c_deb+c_cred+c_qr)}</div><div class="ms">${DATA.t1&&DATA.t2?'2 terminales':DATA.t1?'Terminal 1':'Terminal 2'}</div></div>
+  </div>`;
+
+  // ── CLOVER vs BNA
+  if(tieneBNA){
+    const dif_deb=b.Debito-c_deb;
+    const dif_cred=b.Credito-c_cred;
+    const dif_qr=b.QR-c_qr;
+    const est=(dif,val)=>{
+      if(!val)return'<span class="badge b-gray">Sin Clover</span>';
+      const p=dif/val*100;
+      if(dif>=0)return`<span class="badge b-green">BNA +${p.toFixed(1)}%</span>`;
+      if(Math.abs(p)<5)return`<span class="badge b-green">Calza (${p.toFixed(1)}%)</span>`;
+      return`<span class="badge b-red">⚠ ${p.toFixed(1)}%</span>`;
+    };
+    html+=`<div class="label-section" style="margin-top:14px">Clover vs BNA</div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="tw"><table>
+        <thead><tr><th>Tipo</th><th class="r">Clover bruto</th><th class="r">Clover neto est.</th><th class="r">BNA acreditó</th><th class="r">Diferencia</th><th class="c">Estado</th></tr></thead>
+        <tbody>
+          <tr><td class="tb">Débito + Prepaid</td><td class="r tm">${fmt(c_deb)}</td><td class="r tg">${fmt(n_deb)}</td><td class="r tm">${fmt(b.Debito)}</td><td class="r ${dif_deb>=0?'tg':'tr'}">${fmt(dif_deb)}</td><td class="c">${est(dif_deb,c_deb)}</td></tr>
+          <tr><td class="tb">Crédito</td><td class="r tm">${fmt(c_cred)}</td><td class="r tg">${fmt(n_cred)}</td><td class="r tm">${fmt(b.Credito)}</td><td class="r ${dif_cred>=0?'tg':'tr'}">${fmt(dif_cred)}</td><td class="c">${est(dif_cred,c_cred)}</td></tr>
+          <tr><td class="tb">QR / DEBIN</td><td class="r tm">${fmt(c_qr)}</td><td class="r tg">${fmt(n_qr)}</td><td class="r tm">${fmt(b.QR)}</td><td class="r ${dif_qr>=0?'tg':'tr'}">${fmt(dif_qr)}</td><td class="c">${est(dif_qr,c_qr)}</td></tr>
+        </tbody>
+        <tfoot><tr class="tfoot"><td>TOTAL</td><td class="r">${fmt(c_deb+c_cred+c_qr)}</td><td class="r tg">${fmt(n_deb+n_cred+n_qr)}</td><td class="r">${fmt(b.QR+b.Debito+b.Credito)}</td><td class="r ${(b.QR+b.Debito+b.Credito)>=(c_deb+c_cred+c_qr)?'tg':'tr'}">${fmt((b.QR+b.Debito+b.Credito)-(c_deb+c_cred+c_qr))}</td><td></td></tr></tfoot>
+      </table></div>
+    </div>`;
+  }
+
+  // ── FISERV vs BNA
+  if(tieneFiserv&&tieneBNA){
+    const df=b.Debito-f.debito;
+    const cf=b.Credito-f_cred_total;
+    html+=`<div class="label-section">Fiserv vs BNA</div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="tw"><table>
+        <thead><tr><th>Tipo</th><th class="r">Fiserv presentado</th><th class="r">Fiserv neto</th><th class="r">BNA acreditó</th><th class="r">Diferencia</th><th class="c">Estado</th></tr></thead>
+        <tbody>
+          <tr><td class="tb">Débito (MC+Visa Debit)</td><td class="r tm">${fmt(f.presentadoDeb)}</td><td class="r tg">${fmt(f.debito)}</td><td class="r tm">${fmt(b.Debito)}</td><td class="r ${df>=0?'tg':'tr'}">${fmt(df)}</td><td class="c"><span class="badge ${df>=0?'b-green':'b-red'}">${df>=0?'BNA mayor':'⚠ Revisar'}</span></td></tr>
+          <tr><td class="tb">Crédito + Adelantos</td><td class="r tm">${fmt(f.presentadoCred)}</td><td class="r tg">${fmt(f_cred_total)}</td><td class="r tm">${fmt(b.Credito)}</td><td class="r ${cf>=0?'tg':'tr'}">${fmt(cf)}</td><td class="c"><span class="badge ${cf>=0?'b-green':'b-amber'}">${cf>=0?'BNA mayor':'Timing'}</span></td></tr>
+          <tr><td class="tb">QR / DEBIN (no pasa por Fiserv)</td><td class="r ta">—</td><td class="r ta">—</td><td class="r tm">${fmt(b.QR)}</td><td class="r ta">—</td><td class="c"><span class="badge b-blue">Directo banco</span></td></tr>
+        </tbody>
+        <tfoot><tr class="tneto"><td>NETO TOTAL FISERV</td><td class="r"></td><td class="r tg">${fmt(f.debito+f_cred_total)}</td><td class="r">${fmt(b.QR+b.Debito+b.Credito)}</td><td class="r"></td><td class="c"><span class="badge b-gray">BNA incluye CUIT agrupador</span></td></tr></tfoot>
+      </table></div>
+      <div style="margin-top:10px;font-size:11px;color:var(--ink3)">El BNA siempre acredita más que Fiserv porque el CUIT liquidador agrupa múltiples bocas YPF. Si BNA &lt; Fiserv → revisar con Fiserv.</div>
+    </div>`;
+  }
+
+  // ── FISERV solo (sin BNA)
+  if(tieneFiserv&&!tieneBNA){
+    html+=`<div class="label-section" style="margin-top:14px">Liquidaciones Fiserv</div>
+    <div class="card"><div class="tw"><table>
+      <thead><tr><th>Tarjeta</th><th class="r">Presentado</th><th class="r">Neto</th><th>Tipo</th></tr></thead>
+      <tbody>${DATA.fiserv.map(r=>`<tr><td class="tb">${r.tarjeta}</td><td class="r tm">${r.presentado>0?fmt(r.presentado):'—'}</td><td class="r tg">${fmt(r.neto)}</td><td>${badgeTipo(r.tipo==='debito'?'Debito':r.tipo==='credito'?'Credito':'Otro')}</td></tr>`).join('')}</tbody>
+    </table></div></div>`;
+  }
+
+  el.innerHTML=html||'<div class="empty"><div class="empty-icon">⇌</div><div class="empty-title">Sin datos suficientes</div></div>';
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER BNA
+// ═══════════════════════════════════════════════════════
+function renderBNA(){
+  const el=document.getElementById('bna-content');
+  if(!DATA.bna.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">🏦</div><div class="empty-title">Sin extracto bancario</div></div>';
+    document.getElementById('bna-filter').style.display='none';
+    return;
+  }
+  document.getElementById('bna-filter').style.display='flex';
+  const q=(document.getElementById('bna-q').value||'').toLowerCase();
+  const tf=document.getElementById('bna-tipo').value;
+  let lista=DATA.bna.filter(m=>{
+    if(tf&&m.tipo!==tf)return false;
+    if(q&&![m.concepto,String(m.monto),m.fecha].join(' ').toLowerCase().includes(q))return false;
+    return true;
+  });
+  // Resumen por fecha
+  const porFecha={};
+  lista.forEach(m=>{
+    if(!porFecha[m.fecha])porFecha[m.fecha]={QR:0,Debito:0,Credito:0,total:0};
+    porFecha[m.fecha][m.tipo]=(porFecha[m.fecha][m.tipo]||0)+m.monto;
+    porFecha[m.fecha].total+=m.monto;
+  });
+  const total=lista.reduce((s,m)=>s+m.monto,0);
+  const bQR=lista.filter(m=>m.tipo==='QR').reduce((s,m)=>s+m.monto,0);
+  const bDeb=lista.filter(m=>m.tipo==='Debito').reduce((s,m)=>s+m.monto,0);
+  const bCred=lista.filter(m=>m.tipo==='Credito').reduce((s,m)=>s+m.monto,0);
+
+  const resumenRows=Object.keys(porFecha).sort().map(f=>`<tr>
+    <td class="tb tm">${fmtD(f)}</td>
+    <td class="r ${porFecha[f].QR?'ta':''}tm">${porFecha[f].QR?fmt(porFecha[f].QR):'—'}</td>
+    <td class="r ${porFecha[f].Debito?'tg':''}tm">${porFecha[f].Debito?fmt(porFecha[f].Debito):'—'}</td>
+    <td class="r ${porFecha[f].Credito?''}tm">${porFecha[f].Credito?fmt(porFecha[f].Credito):'—'}</td>
+    <td class="r tb tm">${fmt(porFecha[f].total)}</td>
+  </tr>`).join('');
+
+  const detalleRows=lista.slice(0,300).map(m=>`<tr>
+    <td class="tm">${fmtD(m.fecha)}</td>
+    <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink2)">${m.concepto}</td>
+    <td class="c">${badgeTipo(m.tipo)}</td>
+    <td class="r tg">${fmt(m.monto)}</td>
+  </tr>`).join('');
+
+  el.innerHTML=`
+    <div class="metrics" style="margin-bottom:12px">
+      <div class="metric m-amber"><div class="ml">QR / DEBIN</div><div class="mv">${fmt(bQR)}</div><div class="ms">${DATA.bna.filter(m=>m.tipo==='QR').length} movs</div></div>
+      <div class="metric m-green"><div class="ml">Débito</div><div class="mv">${fmt(bDeb)}</div><div class="ms">${DATA.bna.filter(m=>m.tipo==='Debito').length} movs</div></div>
+      <div class="metric m-blue"><div class="ml">Crédito</div><div class="mv">${fmt(bCred)}</div><div class="ms">${DATA.bna.filter(m=>m.tipo==='Credito').length} movs</div></div>
+      <div class="metric m-red"><div class="ml">Total</div><div class="mv">${fmt(total)}</div><div class="ms">${lista.length} movs</div></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><div class="card-title">Resumen por fecha</div>
+        <div class="tw"><table><thead><tr><th>Fecha</th><th class="r">QR</th><th class="r">Débito</th><th class="r">Crédito</th><th class="r">Total</th></tr></thead>
+        <tbody>${resumenRows}</tbody>
+        <tfoot><tr class="tfoot"><td>TOTAL</td><td class="r ta">${fmt(bQR)}</td><td class="r tg">${fmt(bDeb)}</td><td class="r">${fmt(bCred)}</td><td class="r">${fmt(total)}</td></tr></tfoot>
+        </table></div>
+      </div>
+      <div class="card"><div class="card-title">Detalle movimientos (${lista.length})</div>
+        <div class="tw"><table><thead><tr><th>Fecha</th><th>Concepto</th><th class="c">Tipo</th><th class="r">Importe</th></tr></thead>
+        <tbody>${detalleRows}</tbody></table></div>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER FISERV
+// ═══════════════════════════════════════════════════════
+function renderFiserv(){
+  const el=document.getElementById('fiserv-content');
+  if(!DATA.fiserv.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">🏢</div><div class="empty-title">Sin liquidaciones Fiserv</div></div>';
+    return;
+  }
+  const totPres=DATA.fiserv.filter(r=>r.tipo!=='adelanto').reduce((s,r)=>s+r.presentado,0);
+  const totNeto=DATA.fiserv.reduce((s,r)=>s+r.neto,0);
+  const com=totPres-DATA.fiserv.filter(r=>r.tipo!=='adelanto').reduce((s,r)=>s+r.neto,0);
+
+  const filas=DATA.fiserv.map(r=>`<tr>
+    <td class="tb">${r.tarjeta}</td>
+    <td class="c">${r.tipo==='adelanto'?'<span class="badge b-green">Adelanto</span>':r.tipo==='debito'?badgeTipo('Debito'):badgeTipo('Credito')}</td>
+    <td class="r tm">${r.presentado>0?fmt(r.presentado):'—'}</td>
+    <td class="r tg">${fmt(r.neto)}</td>
+    <td class="r tm">${r.tipo!=='adelanto'&&r.presentado>0?((r.presentado-r.neto)/r.presentado*100).toFixed(2)+'%':'—'}</td>
+  </tr>`).join('');
+
+  el.innerHTML=`
+    <div class="metrics" style="margin-bottom:12px">
+      <div class="metric"><div class="ml">Presentado</div><div class="mv">${fmt(totPres)}</div><div class="ms">ventas brutas</div></div>
+      <div class="metric m-amber"><div class="ml">Comisiones</div><div class="mv">-${fmt(com)}</div><div class="ms">${totPres>0?((com/totPres)*100).toFixed(2)+'%':''}</div></div>
+      <div class="metric m-green"><div class="ml">Neto liquidado</div><div class="mv">${fmt(totNeto)}</div><div class="ms">a acreditar en banco</div></div>
+      <div class="metric m-blue"><div class="ml">Ítems</div><div class="mv">${DATA.fiserv.length}</div><div class="ms">tarjetas / adelantos</div></div>
+    </div>
+    <div class="card"><div class="tw"><table>
+      <thead><tr><th>Tarjeta</th><th class="c">Tipo</th><th class="r">Presentado</th><th class="r">Neto liquidado</th><th class="r">% comisión</th></tr></thead>
+      <tbody>${filas}</tbody>
+      <tfoot><tr class="tneto"><td colspan="2"><strong>NETO TOTAL</strong></td><td class="r"><strong>${fmt(totPres)}</strong></td><td class="r tg"><strong>${fmt(totNeto)}</strong></td><td></td></tr></tfoot>
+    </table></div></div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// BACKUP / EXCEL
+// ═══════════════════════════════════════════════════════
+function exportBackup(){
+  const blob=new Blob([JSON.stringify({v:2,DATA},null,0)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='YPF_Backup_'+new Date().toLocaleDateString('es-AR').replace(/\//g,'-')+'.json';a.click();
+}
+function importBackup(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.onchange=()=>{
+    if(!inp.files[0])return;
+    const r=new FileReader();
+    r.onload=e=>{
+      try{
+        const d=JSON.parse(e.target.result);
+        if(d.DATA){
+          DATA=d.DATA;
+          ['t1','t2','bna','fiserv'].forEach(k=>{
+            const loaded=(k==='bna'?DATA.bna.length>0:k==='fiserv'?DATA.fiserv.length>0:!!DATA[k]);
+            document.getElementById('z-'+k).classList.toggle('loaded',loaded);
+          });
+          save();renderAll();
+        }else alert('Archivo de backup inválido.');
+      }catch(e){alert('Error: '+e.message);}
+    };
+    r.readAsText(inp.files[0]);
+  };
+  document.body.appendChild(inp);inp.click();setTimeout(()=>document.body.removeChild(inp),500);
+}
+function exportExcel(){
+  if(typeof XLSX==='undefined'){alert('Sin librería Excel');return;}
+  const wb=XLSX.utils.book_new();
+  // Clover
+  const clov=cloverTotales();
+  if(DATA.t1||DATA.t2){
+    const data=[['Tipo','Bruto','Neto estimado']];
+    [['QR',clov.QR],['Debito',clov.Debito+clov.Prepaid],['Credito',clov.Credito]].forEach(([t,v])=>{
+      data.push([t,v,arNeto(v,t)]);
+    });
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(data),'Clover');
+  }
+  if(DATA.bna.length){
+    const data=[['Fecha','Concepto','Tipo','Importe']];
+    DATA.bna.forEach(m=>data.push([fmtD(m.fecha),m.concepto,m.tipo,m.monto]));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(data),'BNA');
+  }
+  if(DATA.fiserv.length){
+    const data=[['Tarjeta','Tipo','Presentado','Neto']];
+    DATA.fiserv.forEach(r=>data.push([r.tarjeta,r.tipo,r.presentado,r.neto]));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(data),'Fiserv');
+  }
+  XLSX.writeFile(wb,'YPF_Control_'+new Date().toLocaleDateString('es-AR').replace(/\//g,'-')+'.xlsx');
+}
+
+// ═══════════════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════════════
+function showPanel(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  document.querySelector(`.nav-tab[data-panel="${name}"]`).classList.add('active');
+}
+document.querySelectorAll('.nav-tab').forEach(t=>t.onclick=()=>{showPanel(t.dataset.panel);});
+
+function resetConfig(){
+  document.getElementById('cfg-qr').value='0.968';
+  document.getElementById('cfg-deb').value='1.210';
+  document.getElementById('cfg-cred').value='2.178';
+  document.getElementById('cfg-iva').value='21';
+  renderAll();
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER ALL
+// ═══════════════════════════════════════════════════════
+function renderAll(){
+  renderEstado();
+  renderCruce();
+  renderBNA();
+  renderFiserv();
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+function init(){
+  document.getElementById('topdate').textContent=new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  load();
+  if(DATA.t1)document.getElementById('z-t1').classList.add('loaded');
+  if(DATA.t2)document.getElementById('z-t2').classList.add('loaded');
+  if(DATA.bna.length)document.getElementById('z-bna').classList.add('loaded');
+  if(DATA.fiserv.length)document.getElementById('z-fiserv').classList.add('loaded');
+  renderAll();
+}
+</script>
+</body>
+</html>
