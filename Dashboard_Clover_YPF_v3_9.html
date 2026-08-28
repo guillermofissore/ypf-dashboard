@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YPF Control - Daniel Fissore</title>
+<style>
+:root{--bg:#0a0c10;--surf:#111318;--surf2:#181b22;--border:#252a35;--border2:#2e3444;--ink:#e2e6f0;--ink2:#8892a8;--ink3:#525d73;--red:#e8002d;--red2:rgba(232,0,45,.1);--green:#00c98d;--green2:rgba(0,201,141,.1);--amber:#f5a623;--amber2:rgba(245,166,35,.1);--blue:#4a9eff;--blue2:rgba(74,158,255,.1);--mono:"IBM Plex Mono",monospace;--sans:"IBM Plex Sans",sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:13px;min-height:100vh}
+#login{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center}
+.lbox{width:320px;text-align:center;padding:40px 32px;background:var(--surf);border:1px solid var(--border);border-radius:12px}
+.ltitle{font-family:var(--mono);font-size:20px;font-weight:700;margin-bottom:4px}
+.lsub{font-size:11px;color:var(--ink3);font-family:var(--mono);margin-bottom:24px}
+.linp{width:100%;padding:11px 14px;background:var(--surf2);border:1px solid var(--border2);border-radius:8px;color:var(--ink);font-family:var(--mono);font-size:13px;outline:none;margin-bottom:8px}
+.linp:focus{border-color:var(--red)}
+.lbtn{width:100%;padding:11px;background:var(--red);border:none;border-radius:8px;color:#fff;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer}
+.lbtn:hover{opacity:.9}
+.lerr{font-size:11px;color:var(--red);min-height:16px;font-family:var(--mono);margin-bottom:8px}
+.topbar{height:48px;background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:100}
+.tmark{width:22px;height:22px;background:var(--red);border-radius:4px;display:inline-block;flex-shrink:0}
+.tname{font-family:var(--mono);font-weight:700;font-size:13px}
+.tsub{font-family:var(--mono);font-size:10px;color:var(--ink3)}
+.tspc{flex:1}
+.tdate{font-family:var(--mono);font-size:10px;color:var(--ink3)}
+.texit{padding:4px 10px;background:transparent;border:1px solid var(--border2);border-radius:5px;color:var(--ink3);font-family:var(--mono);font-size:10px;cursor:pointer}
+.nav{background:var(--surf);border-bottom:1px solid var(--border);display:flex;padding:0 20px;overflow-x:auto}
+.ntab{padding:12px 14px;font-family:var(--mono);font-size:11px;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s}
+.ntab:hover{color:var(--ink2)}
+.ntab.active{color:var(--ink);border-bottom-color:var(--red)}
+.main{padding:20px;max-width:1200px}
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--surf);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px}
+.ct{font-family:var(--mono);font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+@media(max-width:800px){.grid2,.grid4{grid-template-columns:1fr 1fr}}
+@media(max-width:500px){.grid2,.grid4{grid-template-columns:1fr}}
+.uz{border:1.5px dashed var(--border2);border-radius:8px;padding:20px 14px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surf2);position:relative}
+.uz:hover,.uz.drag{border-color:var(--red);background:rgba(232,0,45,.05)}
+.uz.ok{border-style:solid;border-color:var(--green);background:rgba(0,201,141,.04)}
+.uz input{display:none}
+.uz .icon{font-size:24px;margin-bottom:6px}
+.uz .lbl{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--ink2);margin-bottom:3px}
+.uz .sub{font-size:10px;color:var(--ink3);line-height:1.5}
+.uz .st{font-size:10px;color:var(--green);margin-top:6px;font-family:var(--mono);min-height:14px}
+.uz .clr{position:absolute;top:6px;right:8px;background:transparent;border:none;color:var(--ink3);cursor:pointer;font-size:16px;display:none}
+.uz.ok .clr{display:block}
+.met{background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;border-top:2px solid var(--border)}
+.met.r{border-top-color:var(--red)}.met.r .mv{color:var(--red)}
+.met.g{border-top-color:var(--green)}.met.g .mv{color:var(--green)}
+.met.a{border-top-color:var(--amber)}.met.a .mv{color:var(--amber)}
+.met.b{border-top-color:var(--blue)}.met.b .mv{color:var(--blue)}
+.ml{font-family:var(--mono);font-size:9px;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.mv{font-family:var(--mono);font-size:17px;font-weight:700;color:var(--ink)}
+.ms{font-size:10px;color:var(--ink3);margin-top:2px;font-family:var(--mono)}
+.tw{overflow-x:auto;border-radius:6px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead tr{background:var(--surf2)}
+th{padding:8px 10px;text-align:left;font-family:var(--mono);font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3);border-bottom:1px solid var(--border);white-space:nowrap}
+th.r,td.r{text-align:right}th.c,td.c{text-align:center}
+td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--ink2);font-size:12px}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.015)}
+td.tb{color:var(--ink);font-weight:500}td.tm{font-family:var(--mono)}
+td.tg{color:var(--green);font-family:var(--mono)}td.ta{color:var(--amber);font-family:var(--mono)}td.tr{color:var(--red);font-family:var(--mono)}
+tr.tft td{background:var(--surf2);font-weight:600;color:var(--ink);border-top:1px solid var(--border2)}
+tr.tnt td{background:rgba(0,201,141,.05);font-weight:700;border-top:2px solid rgba(0,201,141,.2)}
+.bdg{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-family:var(--mono);font-size:9px;font-weight:600}
+.bg{background:var(--green2);color:var(--green);border:1px solid rgba(0,201,141,.25)}
+.ba{background:var(--amber2);color:var(--amber);border:1px solid rgba(245,166,35,.25)}
+.br{background:var(--red2);color:var(--red);border:1px solid rgba(232,0,45,.25)}
+.bb{background:var(--blue2);color:var(--blue);border:1px solid rgba(74,158,255,.25)}
+.bgr{background:var(--surf2);color:var(--ink3);border:1px solid var(--border)}
+.alert{border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:8px}
+.aok{background:var(--green2);border:1px solid rgba(0,201,141,.2);color:var(--green)}
+.awk{background:var(--amber2);border:1px solid rgba(245,166,35,.2);color:var(--amber)}
+.aer{background:var(--red2);border:1px solid rgba(232,0,45,.2);color:var(--red)}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:6px;border:1px solid var(--border2);font-family:var(--mono);font-size:11px;cursor:pointer;background:var(--surf2);color:var(--ink2);transition:all .15s}
+.btn:hover{border-color:var(--green);color:var(--green)}
+.btnr{display:flex;gap:8px;flex-wrap:wrap}
+.sep{height:12px}
+.empty{text-align:center;padding:44px 20px;color:var(--ink3)}
+.empty .ei{font-size:28px;margin-bottom:10px}
+.empty .et{font-family:var(--mono);font-size:13px;color:var(--ink2);font-weight:600;margin-bottom:5px}
+.empty .es{font-size:11px;line-height:1.6}
+.sinp{flex:1;min-width:200px;padding:7px 10px;background:var(--surf2);border:1px solid var(--border2);border-radius:6px;color:var(--ink);font-family:var(--mono);font-size:11px;outline:none}
+.ssel{padding:7px 10px;background:var(--surf2);border:1px solid var(--border2);border-radius:6px;color:var(--ink);font-family:var(--mono);font-size:11px;outline:none}
+.cfg-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.cfg-g label{font-family:var(--mono);font-size:9px;color:var(--ink3);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px}
+.cfg-g input{width:100%;padding:8px 10px;background:var(--surf2);border:1px solid var(--border2);border-radius:6px;color:var(--ink);font-family:var(--mono);font-size:12px;outline:none}
+.cfg-g input:focus{border-color:var(--red)}
+.sec{font-family:var(--mono);font-size:9px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+</style>
+</head>
+<body>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<div id="login">
+  <div class="lbox">
+    <div class="ltitle">YPF CONTROL</div>
+    <div class="lsub">Daniel Fissore · APIES 02229</div>
+    <input type="password" class="linp" id="lpass" placeholder="Contrasena">
+    <div class="lerr" id="lerr"></div>
+    <button class="lbtn" id="lbtn">Ingresar</button>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="tmark"></div>
+  <div><div class="tname">YPF CONTROL</div><div class="tsub">Daniel Fissore · APIES 02229</div></div>
+  <div class="tspc"></div>
+  <div class="tdate" id="topd"></div>
+  <button class="texit" id="exitb">Cerrar sesion</button>
+</div>
+
+<div class="nav">
+  <div class="ntab active" data-p="carga">Carga datos</div>
+  <div class="ntab" data-p="cruce">Cruce</div>
+  <div class="ntab" data-p="bna">Banco BNA</div>
+  <div class="ntab" data-p="fiserv">Fiserv</div>
+  <div class="ntab" data-p="config">Config</div>
+</div>
+
+<div class="main">
+
+<div id="pp-carga" class="panel active">
+  <div class="grid2" style="margin-bottom:12px">
+    <div class="uz" id="z-t1" onclick="document.getElementById('f-t1').click()"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="handleDrop(event,'t1')">
+      <input type="file" id="f-t1" accept=".csv,.xlsx,.xls" onchange="loadClover(this.files[0],'t1')">
+      <button class="clr" onclick="event.stopPropagation();clearSrc('t1')">x</button>
+      <div class="icon">📊</div>
+      <div class="lbl">Terminal 1</div>
+      <div class="sub">Clover - Formato A o B<br>CSV o Excel</div>
+      <div class="st" id="st-t1"></div>
+    </div>
+    <div class="uz" id="z-t2" onclick="document.getElementById('f-t2').click()"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="handleDrop(event,'t2')">
+      <input type="file" id="f-t2" accept=".csv,.xlsx,.xls" onchange="loadClover(this.files[0],'t2')">
+      <button class="clr" onclick="event.stopPropagation();clearSrc('t2')">x</button>
+      <div class="icon">📊</div>
+      <div class="lbl">Terminal 2</div>
+      <div class="sub">Clover - Formato A o B<br>CSV o Excel</div>
+      <div class="st" id="st-t2"></div>
+    </div>
+    <div class="uz" id="z-bna" onclick="document.getElementById('f-bna').click()"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="handleDrop(event,'bna')">
+      <input type="file" id="f-bna" accept=".csv,.xlsx,.xls" onchange="loadBNA(this.files[0])">
+      <button class="clr" onclick="event.stopPropagation();clearSrc('bna')">x</button>
+      <div class="icon">🏦</div>
+      <div class="lbl">Extracto BNA</div>
+      <div class="sub">Cuenta corriente<br>XLS o CSV</div>
+      <div class="st" id="st-bna"></div>
+    </div>
+    <div class="uz" id="z-fiserv" onclick="document.getElementById('f-fiserv').click()"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="handleDrop(event,'fiserv')">
+      <input type="file" id="f-fiserv" accept=".csv,.xlsx,.xls" onchange="loadFiserv(this.files[0])">
+      <button class="clr" onclick="event.stopPropagation();clearSrc('fiserv')">x</button>
+      <div class="icon">🏢</div>
+      <div class="lbl">Liquidaciones Fiserv</div>
+      <div class="sub">Liquidaciones mensuales<br>Excel o CSV</div>
+      <div class="st" id="st-fiserv"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">Estado</div>
+    <div id="est-carga"><div class="empty"><div class="ei">↑</div><div class="et">Sin datos</div><div class="es">Carga los archivos arriba</div></div></div>
+    <div class="sep"></div>
+    <div class="btnr">
+      <button class="btn" onclick="expBackup()">↓ Backup</button>
+      <button class="btn" onclick="impBackup()">↑ Importar</button>
+      <button class="btn" onclick="expExcel()">↓ Excel</button>
+      <button class="btn" onclick="clearAll()" style="color:var(--red)">Limpiar todo</button>
+    </div>
+  </div>
+</div>
+
+<div id="pp-cruce" class="panel">
+  <div id="cruce-c"><div class="empty"><div class="ei">⇌</div><div class="et">Carga datos primero</div><div class="es">Necesitas Clover + BNA o Clover + Fiserv</div></div></div>
+</div>
+
+<div id="pp-bna" class="panel">
+  <div id="bna-flt" style="display:none;margin-bottom:12px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input type="text" class="sinp" id="bna-q" placeholder="Buscar concepto o importe..." oninput="renderBNA()">
+      <select class="ssel" id="bna-tp" onchange="renderBNA()">
+        <option value="">Todos los tipos</option>
+        <option value="QR">QR / DEBIN</option>
+        <option value="Debito">Debito</option>
+        <option value="Credito">Credito</option>
+      </select>
+    </div>
+  </div>
+  <div id="bna-c"><div class="empty"><div class="ei">🏦</div><div class="et">Sin extracto bancario</div></div></div>
+</div>
+
+<div id="pp-fiserv" class="panel">
+  <div id="fiserv-c"><div class="empty"><div class="ei">🏢</div><div class="et">Sin liquidaciones Fiserv</div></div></div>
+</div>
+
+<div id="pp-config" class="panel">
+  <div class="card" style="margin-bottom:12px">
+    <div class="ct">Aranceles c/IVA</div>
+    <div class="cfg-g">
+      <div><label>QR / Transferencia (%)</label><input type="number" id="c-qr" value="0.968" step="0.001" oninput="renderAll()"></div>
+      <div><label>Debito / Prepaid (%)</label><input type="number" id="c-deb" value="1.210" step="0.001" oninput="renderAll()"></div>
+      <div><label>Credito 1 cuota (%)</label><input type="number" id="c-cred" value="2.178" step="0.001" oninput="renderAll()"></div>
+      <div><label>IVA sobre arancel (%)</label><input type="number" id="c-iva" value="21" step="0.1" oninput="renderAll()"></div>
+    </div>
+    <div class="sep"></div>
+    <button class="btn" onclick="resetCfg()">Restaurar defaults</button>
+  </div>
+  <div class="card">
+    <div class="ct">Dias de acreditacion</div>
+    <div style="font-size:12px;color:var(--ink2);line-height:2.4">
+      QR / DEBIN <span style="color:var(--green);font-family:var(--mono)">0 dias habiles</span> (mismo dia)<br>
+      Debito + Prepaid <span style="color:var(--green);font-family:var(--mono)">1 dia habil</span><br>
+      Credito Visa / MC <span style="color:var(--green);font-family:var(--mono)">2 dias habiles</span><br>
+      Amex 1 cuota <span style="color:var(--amber);font-family:var(--mono)">3 dias habiles</span>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+var HASH = '013d7a2913436290e5463bffb2f697d79ba9389d5c6cd8ffc4576044b442edcb';
+var DATA = {t1:null, t2:null, bna:[], fiserv:[]};
+var SK = 'ypfv3';
+
+// AUTH
+async function sha256(s) {
+  try {
+    var b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+    return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0');}).join('');
+  } catch(e) {
+    return s === 'ypf2229' ? HASH : '';
+  }
+}
+async function doLogin() {
+  var p = document.getElementById('lpass').value;
+  if (!p) { document.getElementById('lerr').textContent = 'Ingresa la contrasena'; return; }
+  var h = await sha256(p);
+  if (h === HASH) {
+    localStorage.setItem('ypf_auth', HASH);
+    document.getElementById('login').style.display = 'none';
+    init();
+  } else {
+    document.getElementById('lerr').textContent = 'Contrasena incorrecta';
+    document.getElementById('lpass').value = '';
+  }
+}
+document.getElementById('lbtn').onclick = doLogin;
+document.getElementById('lpass').onkeydown = function(e) { if (e.key === 'Enter') doLogin(); };
+document.getElementById('exitb').onclick = function() {
+  if (confirm('Cerrar sesion?')) { localStorage.removeItem('ypf_auth'); location.reload(); }
+};
+if (localStorage.getItem('ypf_auth') === HASH) {
+  document.getElementById('login').style.display = 'none';
+  window.addEventListener('load', init);
+}
+
+// STORAGE
+function save() { try { localStorage.setItem(SK, JSON.stringify(DATA)); } catch(e) {} }
+function loadStorage() { try { var d = localStorage.getItem(SK); if (d) DATA = JSON.parse(d); } catch(e) {} }
+
+// NAV
+document.querySelectorAll('.ntab').forEach(function(t) {
+  t.onclick = function() {
+    document.querySelectorAll('.ntab').forEach(function(x){x.classList.remove('active');});
+    document.querySelectorAll('.panel').forEach(function(x){x.classList.remove('active');});
+    t.classList.add('active');
+    document.getElementById('pp-' + t.dataset.p).classList.add('active');
+  };
+});
+
+// UTILS
+function fmt(n) {
+  if (!n && n !== 0) return '-';
+  return '$ ' + Math.abs(n).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtD(s) {
+  if (!s) return '-';
+  var p = s.split('-');
+  return p[2] + '/' + p[1] + '/' + p[0];
+}
+function parseNum(s) {
+  if (!s && s !== 0) return 0;
+  if (typeof s === 'number') return s;
+  s = String(s).split('$').join('').split(String.fromCharCode(160)).join('').trim();
+  var digits = '';
+  for (var i = 0; i < s.length; i++) {
+    var c = s[i];
+    if ((c >= '0' && c <= '9') || c === ',' || c === '.') digits += c;
+    else if (digits.length > 0) break;
+  }
+  if (!digits) return 0;
+  var n = digits;
+  if (n.indexOf(',') >= 0 && n.indexOf('.') >= 0) return parseFloat(n.split('.').join('').replace(',','.')) || 0;
+  if (n.indexOf(',') >= 0) return parseFloat(n.replace(',','.')) || 0;
+  return parseFloat(n) || 0;
+}
+function parseDate(s) {
+  if (!s) return null;
+  s = String(s).trim();
+  var p;
+  if (s.indexOf('/') >= 0) {
+    p = s.split('/');
+    if (p.length === 3) {
+      var d = p[0], mo = p[1], y = p[2].length === 2 ? '20'+p[2] : p[2];
+      if (d.length <= 2 && mo.length <= 2) return y + '-' + mo.padStart(2,'0') + '-' + d.padStart(2,'0');
+    }
+  }
+  if (s.length >= 10 && s[4] === '-' && s[7] === '-') return s.substring(0,10);
+  if (s.indexOf('-') >= 0) {
+    p = s.split('-');
+    if (p.length >= 3) {
+      var MESES = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+      if (MESES[p[1]]) return p[2] + '-' + MESES[p[1]] + '-' + p[0].padStart(2,'0');
+    }
+  }
+  return null;
+}
+function clasifClover(medio, marca) {
+  var n = (String(medio||'') + ' ' + String(marca||'')).toLowerCase()
+    .split('\u00e9').join('e').split('\u00ed').join('i').split('\u00f3').join('o').split('\u00fa').join('u').split('\u00e1').join('a');
+  if (n.indexOf('qr')>=0||n.indexOf('posnet')>=0||n.indexOf('transfer')>=0||n.indexOf('mercado pago')>=0||n.indexOf('naranja')>=0||n.indexOf('uala')>=0||n.indexOf('agil')>=0||n.indexOf('cdni')>=0||n.indexOf('claro pay')>=0||n.indexOf('billetera')>=0) return 'QR';
+  if (n.indexOf('prepaid')>=0||n.indexOf('prepag')>=0) return 'Prepaid';
+  if (n.indexOf('deb')>=0) return 'Debito';
+  if (n.indexOf('cred')>=0||n.indexOf('visa')>=0||n.indexOf('mastercard')>=0||n.indexOf('amex')>=0||n.indexOf('argencard')>=0||n.indexOf('cabal')>=0) return 'Credito';
+  return 'Otro';
+}
+function detectBNA(c) {
+  c = (c||'').toLowerCase();
+  if (c.indexOf('dep.ch')>=0||c.indexOf('cheque')>=0||c.indexOf('echeq')>=0||c.indexOf('gravamen')>=0||c.indexOf('comision')>=0||c.indexOf('sirtac')>=0||c.indexOf('impuesto')>=0||c.indexOf('retenc')>=0) return null;
+  if (c.indexOf('debin')>=0) return 'QR';
+  if (c.indexOf('liq master deb')>=0||c.indexOf('master deb 24')>=0||c.indexOf('visa deb')>=0) return 'Debito';
+  if (c.indexOf('liq mastercard')>=0||c.indexOf('mastercard 24')>=0||c.indexOf('visa cred')>=0||c.indexOf('amex')>=0||c.indexOf('argencard')>=0||c.indexOf('cabal')>=0) return 'Credito';
+  return null;
+}
+function getCfg() {
+  return {
+    qr: parseFloat(document.getElementById('c-qr').value) || 0.968,
+    deb: parseFloat(document.getElementById('c-deb').value) || 1.210,
+    cred: parseFloat(document.getElementById('c-cred').value) || 2.178,
+    iva: parseFloat(document.getElementById('c-iva').value) || 21
+  };
+}
+function neto(bruto, tipo) {
+  var c = getCfg();
+  var ar = {QR:c.qr, Debito:c.deb, Prepaid:c.deb, Credito:c.cred}[tipo] || 0;
+  return bruto * (1 - ar/100);
+}
+function resetCfg() {
+  document.getElementById('c-qr').value = '0.968';
+  document.getElementById('c-deb').value = '1.210';
+  document.getElementById('c-cred').value = '2.178';
+  document.getElementById('c-iva').value = '21';
+  renderAll();
+}
+function badge(tipo) {
+  var m = {QR:'ba', Debito:'bg', Prepaid:'bgr', Credito:'bb', Otro:'bgr'};
+  var l = {QR:'QR', Debito:'Debito', Prepaid:'Prepaid', Credito:'Credito', Otro:'Otro'};
+  return '<span class="bdg ' + (m[tipo]||'bgr') + '">' + (l[tipo]||tipo) + '</span>';
+}
+
+// CSV
+function splitCSV(line, sep) {
+  var res = [], cur = '', inQ = false;
+  for (var i = 0; i < line.length; i++) {
+    var c = line[i];
+    if (c === '"') { inQ = !inQ; }
+    else if (c === sep && !inQ) { res.push(cur); cur = ''; }
+    else cur += c;
+  }
+  res.push(cur);
+  return res;
+}
+function parseCSV(text) {
+  text = text.split(String.fromCharCode(160)).join(' ');
+  var lines = text.trim().split('\n');
+  if (!lines.length) return [];
+  var sep = lines[0].indexOf(';') >= 0 ? ';' : ',';
+  var headers = lines[0].split(sep).map(function(h){ var hh=h.trim(); if(hh[0]=='"'||hh[0]=="'") hh=hh.slice(1); if(hh[hh.length-1]=='"'||hh[hh.length-1]=="'") hh=hh.slice(0,-1); return hh; });
+  var rows = [];
+  for (var i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    var cols = splitCSV(lines[i], sep);
+    var obj = {};
+    headers.forEach(function(h, j) { obj[h] = (cols[j]||'').trim().split(String.fromCharCode(160)).join(''); });
+    rows.push(obj);
+  }
+  return rows;
+}
+
+// CLOVER FORMATO A
+function parseFormatoA(text) {
+  text = text.split(String.fromCharCode(160)).join(' ');
+  var result = {};
+  var lines = text.split('\n');
+  var enMedios = false, pastHeader = false;
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (!line) continue;
+    if (line.toUpperCase() === 'MEDIOS DE PAGO') { enMedios = true; pastHeader = false; continue; }
+    if (enMedios && !pastHeader && line.toLowerCase().indexOf('medios de pago') >= 0 && line.indexOf(',') >= 0) { pastHeader = true; continue; }
+    if (enMedios && pastHeader && line.indexOf(',') >= 0) {
+      var sep = line.indexOf(';') >= 0 ? ';' : ',';
+      var cols = splitCSV(line, sep).map(function(c){ return c.split(String.fromCharCode(160)).join('').trim(); });
+      var nombre = cols[0];
+      if (!nombre || nombre.toLowerCase().indexOf('total') === 0) break;
+      var v = parseNum(cols[1]);
+      if (v > 0) result[nombre] = (result[nombre] || 0) + v;
+    }
+  }
+  return result;
+}
+
+// CLOVER LOAD
+function handleDrop(e, dest) {
+  e.preventDefault();
+  document.getElementById('z-' + dest).classList.remove('drag');
+  var f = e.dataTransfer.files[0];
+  if (!f) return;
+  if (dest === 'bna') loadBNA(f);
+  else if (dest === 'fiserv') loadFiserv(f);
+  else loadClover(f, dest);
+}
+function loadClover(file, dest) {
+  if (!file) return;
+  var ext = file.name.split('.').pop().toLowerCase();
+  function onText(text) {
+    var tl = text.toLowerCase();
+    var medios = {};
+    if (tl.indexOf('medios de pago') >= 0 || tl.indexOf('ventas brutas') >= 0) {
+      medios = parseFormatoA(text);
+      var nm = Object.keys(medios).length;
+      if (!nm) { alert('No se encontro la seccion MEDIOS DE PAGO.'); return; }
+      var total = Object.values(medios).reduce(function(a,b){return a+b;}, 0);
+      DATA[dest] = {tipo:'A', medios:medios, total:total};
+      document.getElementById('st-' + dest).textContent = nm + ' medios · ' + fmt(total);
+    } else {
+      var rows = parseCSV(text);
+      var exitosas = rows.filter(function(r) {
+        var keys = {};
+        Object.keys(r).forEach(function(k){ keys[k.toLowerCase().trim()] = r[k]; });
+        return (keys['resultado']||'').trim().toUpperCase() === 'SUCCESS';
+      });
+      if (!exitosas.length) { alert('Sin transacciones exitosas.'); return; }
+      var mediosB = {};
+      exitosas.forEach(function(r) {
+        var keys = {};
+        Object.keys(r).forEach(function(k){ keys[k.toLowerCase().trim()] = r[k]; });
+        var imp = parseNum(keys['importe']||0);
+        var tipo = clasifClover(keys['medio de pago']||'', keys['marca de la tarjeta']||'');
+        mediosB[tipo] = (mediosB[tipo]||0) + imp;
+      });
+      var total = Object.values(mediosB).reduce(function(a,b){return a+b;},0);
+      DATA[dest] = {tipo:'B', medios:mediosB, total:total, txs:exitosas.length};
+      document.getElementById('st-' + dest).textContent = exitosas.length + ' txs · ' + fmt(total);
+    }
+    document.getElementById('z-' + dest).classList.add('ok');
+    save(); renderAll();
+  }
+  if (ext === 'xlsx' || ext === 'xls') {
+    var r = new FileReader();
+    r.onload = function(e) {
+      try {
+        var wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        onText(XLSX.utils.sheet_to_csv(ws));
+      } catch(err) { alert('Error Excel: ' + err.message); }
+    };
+    r.readAsArrayBuffer(file);
+  } else {
+    var r = new FileReader();
+    r.onload = function(e) { onText(e.target.result); };
+    r.readAsText(file, 'UTF-8');
+  }
+}
+
+// BNA LOAD
+function loadBNA(file) {
+  if (!file) return;
+  var ext = file.name.split('.').pop().toLowerCase();
+  function onRows(rows) {
+    var movs = [];
+    rows.forEach(function(r) {
+      var keys = {};
+      Object.keys(r).forEach(function(k){ keys[k.toLowerCase().trim()] = r[k]; });
+      var ks = Object.keys(keys);
+      var fk = ks.find(function(k){return k.indexOf('fecha')>=0;}) || ks[0];
+      var ck = ks.find(function(k){return k.indexOf('concepto')>=0||k.indexOf('descripci')>=0;}) || ks[2];
+      var mk = ks.find(function(k){return k.indexOf('monto')>=0||k.indexOf('importe')>=0||k.indexOf('haber')>=0;}) || ks[3];
+      var fecha = parseDate(keys[fk]||'');
+      var concepto = (keys[ck]||'').trim();
+      var monto = parseNum(keys[mk]!==undefined ? keys[mk] : (keys[ks[3]]||0));
+      if (!fecha || monto <= 0) return;
+      var tipo = detectBNA(concepto);
+      if (!tipo) return;
+      var comp = String(keys['comprobante']||keys[ks[1]]||'').trim();
+      movs.push({fecha:fecha, concepto:concepto, monto:monto, tipo:tipo, comp:comp});
+    });
+    if (!movs.length) { alert('Sin movimientos Clover (DEBIN/Debito/Credito) en el extracto.'); return; }
+    var existing = {};
+    DATA.bna.forEach(function(m){ existing[m.fecha+'|'+m.comp+'|'+m.monto] = true; });
+    movs.forEach(function(m) {
+      var k = m.fecha+'|'+m.comp+'|'+m.monto;
+      if (!m.comp || !existing[k]) { DATA.bna.push(m); existing[k] = true; }
+    });
+    var fechas = DATA.bna.map(function(m){return m.fecha;}).sort();
+    document.getElementById('st-bna').textContent = DATA.bna.length + ' movs · ' + fmtD(fechas[0]) + ' al ' + fmtD(fechas[fechas.length-1]);
+    document.getElementById('z-bna').classList.add('ok');
+    save(); renderAll();
+  }
+  if (ext === 'xlsx' || ext === 'xls') {
+    var r = new FileReader();
+    r.onload = function(e) {
+      try {
+        var wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        var arr = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+        var hr = 0;
+        for (var i = 0; i < arr.length; i++) {
+          if (String(arr[i][0]||'').toLowerCase().trim() === 'fecha') { hr = i; break; }
+        }
+        var headers = arr[hr].map(function(h){return String(h||'').trim();});
+        var rows = arr.slice(hr+1).filter(function(r){return r[0];}).map(function(r){
+          var o = {};
+          headers.forEach(function(h,i){ o[h] = r[i]!==undefined ? r[i] : ''; });
+          return o;
+        });
+        onRows(rows);
+      } catch(err) { alert('Error XLS: ' + err.message); }
+    };
+    r.readAsArrayBuffer(file);
+  } else {
+    var r = new FileReader();
+    r.onload = function(e) {
+      var text = e.target.result;
+      var lines = text.split('\n');
+      var start = 0;
+      for (var i = 0; i < lines.length; i++) {
+        var ll = lines[i].toLowerCase();
+        if (ll.indexOf('fecha') >= 0 && (ll.indexOf('concepto') >= 0 || ll.indexOf('monto') >= 0)) { start = i; break; }
+      }
+      onRows(parseCSV(lines.slice(start).join('\n')));
+    };
+    r.readAsText(file, 'latin1');
+  }
+}
+
+// FISERV LOAD
+function loadFiserv(file) {
+  if (!file) return;
+  var ext = file.name.split('.').pop().toLowerCase();
+  function onRows(rows) {
+    if (!rows.length) { alert('Sin datos en Fiserv.'); return; }
+    var items = [];
+    rows.forEach(function(r) {
+      var keys = {};
+      Object.keys(r).forEach(function(k){ keys[k.toLowerCase().trim()] = r[k]; });
+      var tarjeta = keys['tarjeta']||keys['medio']||'';
+      var presentado = parseNum(keys['total presentado']||keys['presentado']||'0');
+      var neto2 = parseNum(keys['total neto']||keys['neto']||'0');
+      if (!tarjeta) return;
+      var tl = tarjeta.toLowerCase();
+      var tipo = 'otro';
+      if (tl.indexOf('adelanto') >= 0) tipo = 'adelanto';
+      else if (tl.indexOf('debit') >= 0 || tl.indexOf('debito') >= 0) tipo = 'debito';
+      else tipo = 'credito';
+      if (presentado || neto2) items.push({tarjeta:tarjeta, presentado:presentado, neto:neto2, tipo:tipo});
+    });
+    if (!items.length) { alert('Sin items reconocidos en Fiserv.'); return; }
+    DATA.fiserv = items;
+    var totPres = items.filter(function(r){return r.tipo!=='adelanto';}).reduce(function(s,r){return s+r.presentado;},0);
+    var totNeto = items.reduce(function(s,r){return s+r.neto;},0);
+    document.getElementById('st-fiserv').textContent = items.length + ' items · Neto: ' + fmt(totNeto);
+    document.getElementById('z-fiserv').classList.add('ok');
+    save(); renderAll();
+  }
+  if (ext === 'xlsx' || ext === 'xls') {
+    var r = new FileReader();
+    r.onload = function(e) {
+      try {
+        var wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        onRows(XLSX.utils.sheet_to_json(ws, {defval:'', raw:false}));
+      } catch(err) { alert('Error: ' + err.message); }
+    };
+    r.readAsArrayBuffer(file);
+  } else {
+    var r = new FileReader();
+    r.onload = function(e) { onRows(parseCSV(e.target.result)); };
+    r.readAsText(file, 'UTF-8');
+  }
+}
+
+// CLEAR
+function clearSrc(dest) {
+  if (dest === 'bna') DATA.bna = [];
+  else if (dest === 'fiserv') DATA.fiserv = [];
+  else DATA[dest] = null;
+  document.getElementById('z-' + dest).classList.remove('ok');
+  document.getElementById('st-' + dest).textContent = '';
+  save(); renderAll();
+}
+function clearAll() {
+  if (!confirm('Borrar todos los datos?')) return;
+  DATA = {t1:null, t2:null, bna:[], fiserv:[]};
+  ['t1','t2','bna','fiserv'].forEach(function(k) {
+    document.getElementById('z-'+k).classList.remove('ok');
+    document.getElementById('st-'+k).textContent = '';
+  });
+  localStorage.removeItem(SK);
+  renderAll();
+}
+
+// CLOVER TOTALES
+function clovTot() {
+  var tot = {QR:0, Debito:0, Prepaid:0, Credito:0, Otro:0};
+  [DATA.t1, DATA.t2].forEach(function(t) {
+    if (!t) return;
+    Object.keys(t.medios).forEach(function(nombre) {
+      var tipo = clasifClover(nombre, '');
+      tot[tipo] = (tot[tipo]||0) + t.medios[nombre];
+    });
+  });
+  return tot;
+}
+
+// RENDER ESTADO
+function renderEstado() {
+  var el = document.getElementById('est-carga');
+  var items = [];
+  if (DATA.t1) items.push('<span style="color:var(--green)">OK</span> Terminal 1 — ' + fmt(DATA.t1.total));
+  if (DATA.t2) items.push('<span style="color:var(--green)">OK</span> Terminal 2 — ' + fmt(DATA.t2.total));
+  if (DATA.bna.length) {
+    var fs = DATA.bna.map(function(m){return m.fecha;}).sort();
+    items.push('<span style="color:var(--green)">OK</span> BNA — ' + DATA.bna.length + ' movs · ' + fmtD(fs[0]) + ' al ' + fmtD(fs[fs.length-1]));
+  }
+  if (DATA.fiserv.length) items.push('<span style="color:var(--green)">OK</span> Fiserv — ' + DATA.fiserv.length + ' items');
+  if (!items.length) {
+    el.innerHTML = '<div class="empty"><div class="ei">↑</div><div class="et">Sin datos</div><div class="es">Carga los archivos arriba</div></div>';
+    return;
+  }
+  var html = '<div style="display:flex;flex-direction:column;gap:8px">';
+  items.forEach(function(i) { html += '<div style="font-size:12px;color:var(--ink2);font-family:var(--mono)">' + i + '</div>'; });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// RENDER CRUCE
+function renderCruce() {
+  var el = document.getElementById('cruce-c');
+  if (!DATA.t1 && !DATA.t2) {
+    el.innerHTML = '<div class="empty"><div class="ei">⇌</div><div class="et">Carga al menos un terminal Clover</div></div>';
+    return;
+  }
+  var c = clovTot();
+  var cdeb = c.Debito + c.Prepaid;
+  var ccred = c.Credito;
+  var cqr = c.QR;
+  var ndeb = neto(cdeb, 'Debito');
+  var ncred = neto(ccred, 'Credito');
+  var nqr = neto(cqr, 'QR');
+  var b = {QR:0, Debito:0, Credito:0};
+  DATA.bna.forEach(function(m) { b[m.tipo] = (b[m.tipo]||0) + m.monto; });
+  var f = {debito:0, credito:0, adelanto:0, pDeb:0, pCred:0};
+  DATA.fiserv.forEach(function(r) {
+    if (r.tipo === 'debito') { f.debito += r.neto; f.pDeb += r.presentado; }
+    else if (r.tipo === 'credito') { f.credito += r.neto; f.pCred += r.presentado; }
+    else if (r.tipo === 'adelanto') f.adelanto += r.neto;
+  });
+  var fcredT = f.credito + f.adelanto;
+
+  var html = '';
+
+  // Metricas Clover
+  html += '<div class="grid4">';
+  html += '<div class="met a"><div class="ml">QR / PosNet</div><div class="mv">' + fmt(cqr) + '</div><div class="ms">neto ' + fmt(nqr) + '</div></div>';
+  html += '<div class="met g"><div class="ml">Debito + Prepaid</div><div class="mv">' + fmt(cdeb) + '</div><div class="ms">neto ' + fmt(ndeb) + '</div></div>';
+  html += '<div class="met b"><div class="ml">Credito</div><div class="mv">' + fmt(ccred) + '</div><div class="ms">neto ' + fmt(ncred) + '</div></div>';
+  html += '<div class="met r"><div class="ml">Total Clover</div><div class="mv">' + fmt(cdeb+ccred+cqr) + '</div><div class="ms">' + (DATA.t1&&DATA.t2?'2 terminales':DATA.t1?'Terminal 1':'Terminal 2') + '</div></div>';
+  html += '</div>';
+
+  // Clover vs BNA
+  if (DATA.bna.length) {
+    function estBNA(dif, val) {
+      if (!val) return '<span class="bdg bgr">Sin Clover</span>';
+      var p = dif/val*100;
+      if (dif >= 0) return '<span class="bdg bg">BNA +' + p.toFixed(1) + '%</span>';
+      if (Math.abs(p) < 5) return '<span class="bdg bg">Calza (' + p.toFixed(1) + '%)</span>';
+      return '<span class="bdg br">Revisar ' + p.toFixed(1) + '%</span>';
+    }
+    var difDeb = b.Debito - cdeb;
+    var difCred = b.Credito - ccred;
+    var difQR = b.QR - cqr;
+    html += '<div class="sec" style="margin-top:14px">Clover vs BNA</div>';
+    html += '<div class="card"><div class="tw"><table>';
+    html += '<thead><tr><th>Tipo</th><th class="r">Clover bruto</th><th class="r">Neto est.</th><th class="r">BNA acredito</th><th class="r">Diferencia</th><th class="c">Estado</th></tr></thead>';
+    html += '<tbody>';
+    html += '<tr><td class="tb">Debito + Prepaid</td><td class="r tm">' + fmt(cdeb) + '</td><td class="r tg">' + fmt(ndeb) + '</td><td class="r tm">' + fmt(b.Debito) + '</td><td class="r ' + (difDeb>=0?'tg':'tr') + '">' + fmt(difDeb) + '</td><td class="c">' + estBNA(difDeb,cdeb) + '</td></tr>';
+    html += '<tr><td class="tb">Credito</td><td class="r tm">' + fmt(ccred) + '</td><td class="r tg">' + fmt(ncred) + '</td><td class="r tm">' + fmt(b.Credito) + '</td><td class="r ' + (difCred>=0?'tg':'tr') + '">' + fmt(difCred) + '</td><td class="c">' + estBNA(difCred,ccred) + '</td></tr>';
+    html += '<tr><td class="tb">QR / DEBIN</td><td class="r tm">' + fmt(cqr) + '</td><td class="r tg">' + fmt(nqr) + '</td><td class="r tm">' + fmt(b.QR) + '</td><td class="r ' + (difQR>=0?'tg':'tr') + '">' + fmt(difQR) + '</td><td class="c">' + estBNA(difQR,cqr) + '</td></tr>';
+    html += '</tbody>';
+    var totC = cdeb+ccred+cqr, totB = b.QR+b.Debito+b.Credito;
+    html += '<tfoot><tr class="tft"><td>TOTAL</td><td class="r">' + fmt(totC) + '</td><td class="r tg">' + fmt(ndeb+ncred+nqr) + '</td><td class="r">' + fmt(totB) + '</td><td class="r ' + (totB>=totC?'tg':'tr') + '">' + fmt(totB-totC) + '</td><td></td></tr></tfoot>';
+    html += '</table></div></div>';
+  }
+
+  // Fiserv vs BNA
+  if (DATA.fiserv.length && DATA.bna.length) {
+    var dfDeb = b.Debito - f.debito;
+    var dfCred = b.Credito - fcredT;
+    html += '<div class="sec" style="margin-top:14px">Fiserv vs BNA</div>';
+    html += '<div class="card"><div class="tw"><table>';
+    html += '<thead><tr><th>Tipo</th><th class="r">Fiserv presentado</th><th class="r">Fiserv neto</th><th class="r">BNA acredito</th><th class="r">Diferencia</th><th class="c">Estado</th></tr></thead>';
+    html += '<tbody>';
+    html += '<tr><td class="tb">Debito (MC+Visa Debit)</td><td class="r tm">' + fmt(f.pDeb) + '</td><td class="r tg">' + fmt(f.debito) + '</td><td class="r tm">' + fmt(b.Debito) + '</td><td class="r ' + (dfDeb>=0?'tg':'tr') + '">' + fmt(dfDeb) + '</td><td class="c"><span class="bdg ' + (dfDeb>=0?'bg':'br') + '">' + (dfDeb>=0?'BNA mayor':'Revisar') + '</span></td></tr>';
+    html += '<tr><td class="tb">Credito + Adelantos</td><td class="r tm">' + fmt(f.pCred) + '</td><td class="r tg">' + fmt(fcredT) + '</td><td class="r tm">' + fmt(b.Credito) + '</td><td class="r ' + (dfCred>=0?'tg':'ta') + '">' + fmt(dfCred) + '</td><td class="c"><span class="bdg ' + (dfCred>=0?'bg':'ba') + '">' + (dfCred>=0?'BNA mayor':'Timing') + '</span></td></tr>';
+    html += '<tr><td class="tb">QR / DEBIN (no pasa por Fiserv)</td><td class="r ta">-</td><td class="r ta">-</td><td class="r tm">' + fmt(b.QR) + '</td><td class="r ta">-</td><td class="c"><span class="bdg bb">Directo banco</span></td></tr>';
+    html += '</tbody>';
+    html += '<tfoot><tr class="tnt"><td>Neto total Fiserv</td><td class="r"></td><td class="r tg">' + fmt(f.debito+fcredT) + '</td><td class="r">' + fmt(b.QR+b.Debito+b.Credito) + '</td><td class="r"></td><td class="c"><span class="bdg bgr">CUIT agrupador</span></td></tr></tfoot>';
+    html += '</table></div>';
+    html += '<div style="margin-top:8px;font-size:11px;color:var(--ink3)">El BNA acredita mas porque el CUIT liquidador agrupa multiples bocas YPF. Si BNA es menor a Fiserv: revisar con Fiserv.</div>';
+    html += '</div>';
+  }
+
+  // Fiserv solo
+  if (DATA.fiserv.length && !DATA.bna.length) {
+    html += '<div class="sec" style="margin-top:14px">Liquidaciones Fiserv</div>';
+    html += '<div class="card"><div class="tw"><table>';
+    html += '<thead><tr><th>Tarjeta</th><th>Tipo</th><th class="r">Presentado</th><th class="r">Neto</th></tr></thead><tbody>';
+    DATA.fiserv.forEach(function(r) {
+      var t = r.tipo === 'adelanto' ? '<span class="bdg bg">Adelanto</span>' : r.tipo === 'debito' ? badge('Debito') : badge('Credito');
+      html += '<tr><td class="tb">' + r.tarjeta + '</td><td>' + t + '</td><td class="r tm">' + (r.presentado>0?fmt(r.presentado):'-') + '</td><td class="r tg">' + fmt(r.neto) + '</td></tr>';
+    });
+    html += '</tbody></table></div></div>';
+  }
+
+  el.innerHTML = html;
+}
+
+// RENDER BNA
+function renderBNA() {
+  var el = document.getElementById('bna-c');
+  if (!DATA.bna.length) {
+    el.innerHTML = '<div class="empty"><div class="ei">🏦</div><div class="et">Sin extracto bancario</div></div>';
+    document.getElementById('bna-flt').style.display = 'none';
+    return;
+  }
+  document.getElementById('bna-flt').style.display = 'flex';
+  var q = (document.getElementById('bna-q').value||'').toLowerCase();
+  var tf = document.getElementById('bna-tp').value;
+  var lista = DATA.bna.filter(function(m) {
+    if (tf && m.tipo !== tf) return false;
+    if (q && (m.concepto+' '+m.monto+' '+m.fecha).toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  });
+  var pf = {};
+  lista.forEach(function(m) {
+    if (!pf[m.fecha]) pf[m.fecha] = {QR:0, Debito:0, Credito:0, total:0};
+    pf[m.fecha][m.tipo] = (pf[m.fecha][m.tipo]||0) + m.monto;
+    pf[m.fecha].total += m.monto;
+  });
+  var total = lista.reduce(function(s,m){return s+m.monto;},0);
+  var bQR = lista.filter(function(m){return m.tipo==='QR';}).reduce(function(s,m){return s+m.monto;},0);
+  var bDeb = lista.filter(function(m){return m.tipo==='Debito';}).reduce(function(s,m){return s+m.monto;},0);
+  var bCred = lista.filter(function(m){return m.tipo==='Credito';}).reduce(function(s,m){return s+m.monto;},0);
+
+  var rRows = '';
+  Object.keys(pf).sort().forEach(function(f) {
+    rRows += '<tr><td class="tb tm">' + fmtD(f) + '</td><td class="r ta tm">' + (pf[f].QR?fmt(pf[f].QR):'-') + '</td><td class="r tg tm">' + (pf[f].Debito?fmt(pf[f].Debito):'-') + '</td><td class="r tm">' + (pf[f].Credito?fmt(pf[f].Credito):'-') + '</td><td class="r tb tm">' + fmt(pf[f].total) + '</td></tr>';
+  });
+  var dRows = '';
+  lista.slice(0,300).forEach(function(m) {
+    dRows += '<tr><td class="tm">' + fmtD(m.fecha) + '</td><td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink2)">' + m.concepto + '</td><td class="c">' + badge(m.tipo) + '</td><td class="r tg">' + fmt(m.monto) + '</td></tr>';
+  });
+
+  var html = '<div class="grid4" style="margin-bottom:12px">';
+  html += '<div class="met a"><div class="ml">QR / DEBIN</div><div class="mv">' + fmt(bQR) + '</div><div class="ms">' + DATA.bna.filter(function(m){return m.tipo==='QR';}).length + ' movs</div></div>';
+  html += '<div class="met g"><div class="ml">Debito</div><div class="mv">' + fmt(bDeb) + '</div><div class="ms">' + DATA.bna.filter(function(m){return m.tipo==='Debito';}).length + ' movs</div></div>';
+  html += '<div class="met b"><div class="ml">Credito</div><div class="mv">' + fmt(bCred) + '</div><div class="ms">' + DATA.bna.filter(function(m){return m.tipo==='Credito';}).length + ' movs</div></div>';
+  html += '<div class="met r"><div class="ml">Total</div><div class="mv">' + fmt(total) + '</div><div class="ms">' + lista.length + ' movs</div></div>';
+  html += '</div>';
+  html += '<div class="grid2">';
+  html += '<div class="card"><div class="ct">Por fecha</div><div class="tw"><table><thead><tr><th>Fecha</th><th class="r">QR</th><th class="r">Debito</th><th class="r">Credito</th><th class="r">Total</th></tr></thead><tbody>' + rRows + '</tbody><tfoot><tr class="tft"><td>TOTAL</td><td class="r ta">' + fmt(bQR) + '</td><td class="r tg">' + fmt(bDeb) + '</td><td class="r">' + fmt(bCred) + '</td><td class="r">' + fmt(total) + '</td></tr></tfoot></table></div></div>';
+  html += '<div class="card"><div class="ct">Detalle (' + lista.length + ')</div><div class="tw"><table><thead><tr><th>Fecha</th><th>Concepto</th><th class="c">Tipo</th><th class="r">Importe</th></tr></thead><tbody>' + dRows + '</tbody></table></div></div>';
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// RENDER FISERV
+function renderFiserv() {
+  var el = document.getElementById('fiserv-c');
+  if (!DATA.fiserv.length) {
+    el.innerHTML = '<div class="empty"><div class="ei">🏢</div><div class="et">Sin liquidaciones Fiserv</div></div>';
+    return;
+  }
+  var totPres = DATA.fiserv.filter(function(r){return r.tipo!=='adelanto';}).reduce(function(s,r){return s+r.presentado;},0);
+  var totNeto = DATA.fiserv.reduce(function(s,r){return s+r.neto;},0);
+  var com = totPres - DATA.fiserv.filter(function(r){return r.tipo!=='adelanto';}).reduce(function(s,r){return s+r.neto;},0);
+
+  var filas = '';
+  DATA.fiserv.forEach(function(r) {
+    var t = r.tipo==='adelanto' ? '<span class="bdg bg">Adelanto</span>' : r.tipo==='debito' ? badge('Debito') : badge('Credito');
+    var pct = (r.tipo!=='adelanto'&&r.presentado>0) ? ((r.presentado-r.neto)/r.presentado*100).toFixed(2)+'%' : '-';
+    filas += '<tr><td class="tb">' + r.tarjeta + '</td><td class="c">' + t + '</td><td class="r tm">' + (r.presentado>0?fmt(r.presentado):'-') + '</td><td class="r tg">' + fmt(r.neto) + '</td><td class="r tm">' + pct + '</td></tr>';
+  });
+
+  var html = '<div class="grid4" style="margin-bottom:12px">';
+  html += '<div class="met"><div class="ml">Presentado</div><div class="mv">' + fmt(totPres) + '</div><div class="ms">ventas brutas</div></div>';
+  html += '<div class="met a"><div class="ml">Comisiones</div><div class="mv">-' + fmt(com) + '</div><div class="ms">' + (totPres>0?((com/totPres)*100).toFixed(2)+'%':'') + '</div></div>';
+  html += '<div class="met g"><div class="ml">Neto liquidado</div><div class="mv">' + fmt(totNeto) + '</div><div class="ms">a acreditar banco</div></div>';
+  html += '<div class="met b"><div class="ml">Items</div><div class="mv">' + DATA.fiserv.length + '</div><div class="ms">tarjetas / adelantos</div></div>';
+  html += '</div>';
+  html += '<div class="card"><div class="tw"><table><thead><tr><th>Tarjeta</th><th class="c">Tipo</th><th class="r">Presentado</th><th class="r">Neto liquidado</th><th class="r">% comision</th></tr></thead><tbody>' + filas + '</tbody><tfoot><tr class="tnt"><td colspan="2">Neto total</td><td class="r">' + fmt(totPres) + '</td><td class="r tg">' + fmt(totNeto) + '</td><td></td></tr></tfoot></table></div></div>';
+  el.innerHTML = html;
+}
+
+// BACKUP / EXCEL
+function expBackup() {
+  var blob = new Blob([JSON.stringify({v:3,DATA:DATA})], {type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'YPF_Backup_' + new Date().toLocaleDateString('es-AR').split('/').join('-') + '.json';
+  a.click();
+}
+function impBackup() {
+  var inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.json';
+  inp.onchange = function() {
+    if (!inp.files[0]) return;
+    var r = new FileReader();
+    r.onload = function(e) {
+      try {
+        var d = JSON.parse(e.target.result);
+        if (d.DATA) {
+          DATA = d.DATA;
+          ['t1','t2','bna','fiserv'].forEach(function(k) {
+            var loaded = k==='bna'?DATA.bna.length>0:k==='fiserv'?DATA.fiserv.length>0:!!DATA[k];
+            document.getElementById('z-'+k).classList.toggle('ok', loaded);
+          });
+          save(); renderAll();
+        } else alert('Archivo invalido.');
+      } catch(e) { alert('Error: '+e.message); }
+    };
+    r.readAsText(inp.files[0]);
+  };
+  document.body.appendChild(inp); inp.click(); setTimeout(function(){document.body.removeChild(inp);},500);
+}
+function expExcel() {
+  if (typeof XLSX === 'undefined') { alert('Sin libreria Excel'); return; }
+  var wb = XLSX.utils.book_new();
+  var c = clovTot();
+  if (DATA.t1||DATA.t2) {
+    var d = [['Tipo','Bruto','Neto estimado'],['QR',c.QR,neto(c.QR,'QR')],['Debito',c.Debito+c.Prepaid,neto(c.Debito+c.Prepaid,'Debito')],['Credito',c.Credito,neto(c.Credito,'Credito')]];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(d), 'Clover');
+  }
+  if (DATA.bna.length) {
+    var d2 = [['Fecha','Concepto','Tipo','Importe']];
+    DATA.bna.forEach(function(m){ d2.push([fmtD(m.fecha),m.concepto,m.tipo,m.monto]); });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(d2), 'BNA');
+  }
+  if (DATA.fiserv.length) {
+    var d3 = [['Tarjeta','Tipo','Presentado','Neto']];
+    DATA.fiserv.forEach(function(r){ d3.push([r.tarjeta,r.tipo,r.presentado,r.neto]); });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(d3), 'Fiserv');
+  }
+  XLSX.writeFile(wb, 'YPF_Control_' + new Date().toLocaleDateString('es-AR').split('/').join('-') + '.xlsx');
+}
+
+// RENDER ALL
+function renderAll() {
+  renderEstado();
+  renderCruce();
+  renderBNA();
+  renderFiserv();
+}
+
+// INIT
+function init() {
+  document.getElementById('topd').textContent = new Date().toLocaleDateString('es-AR', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  loadStorage();
+  ['t1','t2','bna','fiserv'].forEach(function(k) {
+    var loaded = k==='bna'?DATA.bna.length>0:k==='fiserv'?DATA.fiserv.length>0:!!DATA[k];
+    if (loaded) document.getElementById('z-'+k).classList.add('ok');
+  });
+  renderAll();
+}
+</script>
+</body>
+</html>
